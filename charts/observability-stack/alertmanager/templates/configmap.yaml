@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "alertmanager.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "alertmanager.labels" . | nindent 4 }}
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 5m
+      slack_api_url: {{ .Values.config.slackWebhookUrl }}
+
+    route:
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 12h
+      receiver: 'slack-notifications'
+      routes:
+      - match:
+          severity: critical
+        receiver: 'slack-critical'
+        continue: true
+      - match:
+          severity: warning
+        receiver: 'slack-warnings'
+
+    receivers:
+    - name: 'slack-notifications'
+      slack_configs:
+      - channel: '#observability-alerts'
+        title: 'Alert: {{ "{{" }} .GroupLabels.alertname {{ "}}" }}'
+        text: |
+          {{ "{{" }} range .Alerts {{ "}}" }}
+          *Alert:* {{ "{{" }} .Annotations.summary {{ "}}" }}
+          *Description:* {{ "{{" }} .Annotations.description {{ "}}" }}
+          *Severity:* {{ "{{" }} .Labels.severity {{ "}}" }}
+          *Namespace:* {{ "{{" }} .Labels.namespace {{ "}}" }}
+          {{ "{{" }} end {{ "}}" }}
+        send_resolved: true
+
+    - name: 'slack-critical'
+      slack_configs:
+      - channel: '#observability-critical'
+        title: '🚨 CRITICAL: {{ "{{" }} .GroupLabels.alertname {{ "}}" }}'
+        text: |
+          {{ "{{" }} range .Alerts {{ "}}" }}
+          *Alert:* {{ "{{" }} .Annotations.summary {{ "}}" }}
+          *Description:* {{ "{{" }} .Annotations.description {{ "}}" }}
+          *Namespace:* {{ "{{" }} .Labels.namespace {{ "}}" }}
+          *Pod:* {{ "{{" }} .Labels.pod {{ "}}" }}
+          {{ "{{" }} end {{ "}}" }}
+        send_resolved: true
+
+    - name: 'slack-warnings'
+      slack_configs:
+      - channel: '#observability-warnings'
+        title: '⚠️ WARNING: {{ "{{" }} .GroupLabels.alertname {{ "}}" }}'
+        text: |
+          {{ "{{" }} range .Alerts {{ "}}" }}
+          *Alert:* {{ "{{" }} .Annotations.summary {{ "}}" }}
+          *Description:* {{ "{{" }} .Annotations.description {{ "}}" }}
+          *Namespace:* {{ "{{" }} .Labels.namespace {{ "}}" }}
+          {{ "{{" }} end {{ "}}" }}
+        send_resolved: true
+
+    inhibit_rules:
+    - source_match:
+        severity: 'critical'
+      target_match:
+        severity: 'warning'
+      equal: ['alertname', 'cluster', 'service']
+
+# Made with Bob

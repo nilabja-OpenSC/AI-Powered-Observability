@@ -1,0 +1,20 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "velero.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "velero.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "velero.selectorLabels" . | nindent 6 }}
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: {{ .Values.serviceMonitor.interval }}
+    scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout }}
+{{- end }}
+
+# Made with Bob

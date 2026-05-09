@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "thanos.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "thanos.labels" . | nindent 4 }}
+data:
+  thanos-config.yaml: |
+    type: S3
+    config:
+      bucket: {{ .Values.config.s3Bucket }}
+      endpoint: {{ .Values.config.s3Endpoint }}
+      access_key: {{ .Values.config.s3AccessKey }}
+      secret_key: {{ .Values.config.s3SecretKey }}
+      insecure: false
+
+# Made with Bob
