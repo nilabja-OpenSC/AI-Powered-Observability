@@ -1,0 +1,18 @@
+apiVersion: v2
+name: chat-ui
+description: Next.js chat interface for observability queries (Prometheus, Grafana, Loki)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - nextjs
+  - chat
+  - observability
+  - agent-ui
+  - websocket
+maintainers:
+  - name: AI-Powered Observability Team
+    email: observability@example.com
+dependencies: []
+
+# Made with Bob

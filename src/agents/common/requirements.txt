@@ -1,0 +1,55 @@
+# AI-Powered Observability Platform - Common Agent Dependencies
+# Python 3.11+
+
+# LLM Integration
+openai==1.12.0
+groq==0.4.2
+
+# LangChain Framework
+langchain==0.1.9
+langchain-openai==0.0.5
+langchain-community==0.0.20
+
+# Vector Store
+chromadb==0.4.22
+
+# Kubernetes Client
+kubernetes==29.0.0
+
+# HTTP Clients
+httpx==0.26.0
+requests==2.31.0
+
+# Slack Integration
+slack-sdk==3.26.2
+
+# Confluence Integration
+atlassian-python-api==3.41.4
+
+# Prometheus Client
+prometheus-client==0.19.0
+
+# Structured Logging
+structlog==24.1.0
+
+# Environment Variables
+python-dotenv==1.0.1
+
+# Data Validation
+pydantic==2.6.1
+pydantic-settings==2.1.0
+
+# Async Support
+asyncio==3.4.3
+aiohttp==3.9.3
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2024.1
+
+# Testing (optional)
+pytest==8.0.0
+pytest-asyncio==0.23.5
+pytest-mock==3.12.0
+
+# Made with Bob

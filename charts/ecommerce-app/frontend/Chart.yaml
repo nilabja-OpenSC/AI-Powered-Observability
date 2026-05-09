@@ -1,0 +1,18 @@
+apiVersion: v2
+name: frontend-ui
+description: Next.js frontend for e-commerce demo application
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - nextjs
+  - frontend
+  - ecommerce
+  - ui
+  - react
+maintainers:
+  - name: AI-Powered Observability Team
+    email: observability@example.com
+dependencies: []
+
+# Made with Bob

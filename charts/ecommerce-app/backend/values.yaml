@@ -1,0 +1,354 @@
+# Backend API Configuration for AI-Powered Observability Platform
+# Namespace: nilabja-haldar-dev
+# Purpose: FastAPI backend with observability instrumentation
+
+# Global settings
+global:
+  namespace: nilabja-haldar-dev
+
+# Deployment configuration
+replicaCount: 3
+
+image:
+  repository: backend-api
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+
+# Ingress/Route configuration
+route:
+  enabled: true
+  host: backend-api-nilabja-haldar-dev.apps.rosa.example.com
+  path: /
+  tls:
+    enabled: true
+    termination: edge
+
+# Environment variables
+env:
+  # Application settings
+  - name: APP_NAME
+    value: "backend-api"
+  - name: APP_VERSION
+    value: "1.0.0"
+  - name: ENVIRONMENT
+    value: "production"
+  - name: LOG_LEVEL
+    value: "INFO"
+  - name: LOG_FORMAT
+    value: "json"
+  
+  # Database connection
+  - name: DATABASE_HOST
+    value: "postgresql.nilabja-haldar-dev.svc.cluster.local"
+  - name: DATABASE_PORT
+    value: "5432"
+  - name: DATABASE_NAME
+    value: "ecommerce"
+  - name: DATABASE_USER
+    value: "postgres"
+  - name: DATABASE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: postgresql-secret
+        key: postgres-password
+  
+  # Observability settings
+  - name: METRICS_ENABLED
+    value: "true"
+  - name: METRICS_PORT
+    value: "8000"
+  - name: METRICS_PATH
+    value: "/metrics"
+  - name: TRACING_ENABLED
+    value: "false"  # Enable in Phase 2 if needed
+  
+  # Chaos engineering toggle
+  - name: CHAOS_ENABLED
+    value: "false"
+  - name: CHAOS_ERROR_RATE
+    value: "0.0"
+  - name: CHAOS_LATENCY_MS
+    value: "0"
+  
+  # API settings
+  - name: API_PREFIX
+    value: "/api/v1"
+  - name: CORS_ORIGINS
+    value: "*"
+  - name: MAX_CONNECTIONS
+    value: "100"
+
+# Resource limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8000
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Startup probe (for slow-starting containers)
+startupProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 0
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 30
+
+# ServiceMonitor for Prometheus metrics scraping
+serviceMonitor:
+  enabled: true
+  interval: 15s
+  scrapeTimeout: 10s
+  path: /metrics
+  labels:
+    prometheus: kube-prometheus
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Pod security context
+podSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# Volume mounts for temporary files
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+  - name: cache
+    mountPath: /app/.cache
+
+volumes:
+  - name: tmp
+    emptyDir: {}
+  - name: cache
+    emptyDir: {}
+
+# Node selector (optional)
+nodeSelector: {}
+
+# Tolerations (optional)
+tolerations: []
+
+# Affinity rules for high availability
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - backend-api
+          topologyKey: kubernetes.io/hostname
+
+# Additional labels
+labels:
+  app: backend-api
+  component: ecommerce
+  tier: backend
+  managed-by: helm
+
+# Additional annotations
+annotations:
+  description: "FastAPI backend for e-commerce demo"
+  namespace: "nilabja-haldar-dev"
+
+# API endpoints configuration
+api:
+  endpoints:
+    # Products API
+    products:
+      enabled: true
+      path: /api/v1/products
+      methods: ["GET", "POST", "PUT", "DELETE"]
+    
+    # Orders API
+    orders:
+      enabled: true
+      path: /api/v1/orders
+      methods: ["GET", "POST", "PUT", "DELETE"]
+    
+    # Users API
+    users:
+      enabled: true
+      path: /api/v1/users
+      methods: ["GET", "POST", "PUT", "DELETE"]
+    
+    # Cart API
+    cart:
+      enabled: true
+      path: /api/v1/cart
+      methods: ["GET", "POST", "PUT", "DELETE"]
+    
+    # Health endpoints
+    health:
+      enabled: true
+      path: /health
+      methods: ["GET"]
+    
+    readiness:
+      enabled: true
+      path: /ready
+      methods: ["GET"]
+    
+    # Metrics endpoint
+    metrics:
+      enabled: true
+      path: /metrics
+      methods: ["GET"]
+    
+    # Chaos engineering endpoint
+    chaos:
+      enabled: true
+      path: /api/v1/chaos
+      methods: ["GET", "POST"]
+
+# Observability instrumentation
+observability:
+  # Prometheus metrics
+  metrics:
+    enabled: true
+    # Custom metrics to track
+    custom:
+      - name: http_requests_total
+        type: counter
+        description: "Total HTTP requests"
+        labels: ["method", "endpoint", "status"]
+      
+      - name: http_request_duration_seconds
+        type: histogram
+        description: "HTTP request duration"
+        labels: ["method", "endpoint"]
+        buckets: [0.01, 0.05, 0.1, 0.5, 1.0, 5.0]
+      
+      - name: database_queries_total
+        type: counter
+        description: "Total database queries"
+        labels: ["operation", "table"]
+      
+      - name: database_query_duration_seconds
+        type: histogram
+        description: "Database query duration"
+        labels: ["operation", "table"]
+        buckets: [0.001, 0.01, 0.05, 0.1, 0.5, 1.0]
+      
+      - name: active_connections
+        type: gauge
+        description: "Active database connections"
+      
+      - name: cart_operations_total
+        type: counter
+        description: "Cart operations"
+        labels: ["operation"]
+      
+      - name: order_operations_total
+        type: counter
+        description: "Order operations"
+        labels: ["operation", "status"]
+  
+  # Structured logging
+  logging:
+    enabled: true
+    format: json
+    level: INFO
+    fields:
+      - timestamp
+      - level
+      - message
+      - request_id
+      - user_id
+      - endpoint
+      - method
+      - status_code
+      - duration_ms
+      - error
+
+# Chaos engineering configuration
+chaos:
+  enabled: false  # Enable via API endpoint
+  scenarios:
+    # Inject random errors
+    error_injection:
+      enabled: false
+      rate: 0.0  # 0.0 to 1.0 (0% to 100%)
+      endpoints: ["*"]
+    
+    # Inject latency
+    latency_injection:
+      enabled: false
+      min_ms: 0
+      max_ms: 0
+      endpoints: ["*"]
+    
+    # Simulate database failures
+    database_failure:
+      enabled: false
+      rate: 0.0
+    
+    # Simulate high CPU usage
+    cpu_stress:
+      enabled: false
+      duration_seconds: 0
+    
+    # Simulate memory leak
+    memory_leak:
+      enabled: false
+      rate_mb_per_second: 0
+
+# Made with Bob

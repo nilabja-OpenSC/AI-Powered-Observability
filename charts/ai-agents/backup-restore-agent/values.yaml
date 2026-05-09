@@ -1,0 +1,514 @@
+# Backup/Restore Agent Configuration for AI-Powered Observability Platform
+# Namespace: nilabja-haldar-dev
+# Purpose: Manage backups via Velero, execute restore operations with human approval
+
+# Global settings
+global:
+  namespace: nilabja-haldar-dev
+
+# Deployment configuration
+replicaCount: 2
+
+image:
+  repository: backup-restore-agent
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8083
+  targetPort: 8083
+
+# Ingress/Route configuration
+route:
+  enabled: true
+  host: backup-restore-agent-nilabja-haldar-dev.apps.rosa.example.com
+  path: /
+  tls:
+    enabled: true
+    termination: edge
+
+# Environment variables
+env:
+  # Application settings
+  - name: APP_NAME
+    value: "backup-restore-agent"
+  - name: APP_VERSION
+    value: "1.0.0"
+  - name: LOG_LEVEL
+    value: "INFO"
+  - name: LOG_FORMAT
+    value: "json"
+  
+  # LLM configuration (OpenAI)
+  - name: LLM_PROVIDER
+    value: "openai"
+  - name: OPENAI_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: llm-credentials
+        key: openai-api-key
+  - name: OPENAI_MODEL
+    value: "gpt-4"
+  - name: OPENAI_TEMPERATURE
+    value: "0.5"
+  - name: OPENAI_MAX_TOKENS
+    value: "1500"
+  
+  # Alternative: Groq
+  - name: GROQ_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: llm-credentials
+        key: groq-api-key
+        optional: true
+  - name: GROQ_MODEL
+    value: "llama-3.1-70b-versatile"
+  
+  # Vector store configuration (Chroma)
+  - name: VECTOR_STORE_TYPE
+    value: "chroma"
+  - name: CHROMA_HOST
+    value: "chroma.nilabja-haldar-dev.svc.cluster.local"
+  - name: CHROMA_PORT
+    value: "8000"
+  - name: CHROMA_COLLECTION
+    value: "backup-restore-memory"
+  
+  # Kubernetes API configuration
+  - name: KUBERNETES_NAMESPACE
+    value: "nilabja-haldar-dev"
+  - name: KUBERNETES_IN_CLUSTER
+    value: "true"
+  
+  # Velero configuration
+  - name: VELERO_NAMESPACE
+    value: "velero"
+  - name: VELERO_CLI_PATH
+    value: "/usr/local/bin/velero"
+  - name: VELERO_BACKUP_LOCATION
+    value: "default"
+  - name: VELERO_SNAPSHOT_LOCATION
+    value: "default"
+  
+  # Argo Workflows configuration
+  - name: ARGO_NAMESPACE
+    value: "argo"
+  - name: ARGO_SERVER_URL
+    value: "http://argo-server.argo.svc.cluster.local:2746"
+  - name: ARGO_TIMEOUT
+    value: "3600"  # 1 hour for backup/restore workflows
+  
+  # S3 configuration (for Velero backup storage)
+  - name: S3_BUCKET
+    value: "observability-backups"
+  - name: S3_REGION
+    value: "us-east-1"
+  - name: S3_PREFIX
+    value: "nilabja-haldar-dev"
+  - name: AWS_ACCESS_KEY_ID
+    valueFrom:
+      secretKeyRef:
+        name: aws-credentials
+        key: access-key-id
+  - name: AWS_SECRET_ACCESS_KEY
+    valueFrom:
+      secretKeyRef:
+        name: aws-credentials
+        key: secret-access-key
+  
+  # Slack configuration (for approval workflow)
+  - name: SLACK_ENABLED
+    value: "true"
+  - name: SLACK_WEBHOOK_URL
+    valueFrom:
+      secretKeyRef:
+        name: slack-credentials
+        key: webhook-url
+  - name: SLACK_BOT_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: slack-credentials
+        key: bot-token
+  - name: SLACK_CHANNEL
+    value: "#backup-restore-alerts"
+  - name: SLACK_TIMEOUT
+    value: "10"
+  
+  # Confluence configuration (for backup/restore documentation)
+  - name: CONFLUENCE_ENABLED
+    value: "true"
+  - name: CONFLUENCE_URL
+    value: "https://confluence.example.com"
+  - name: CONFLUENCE_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: confluence-credentials
+        key: username
+  - name: CONFLUENCE_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: confluence-credentials
+        key: api-token
+  - name: CONFLUENCE_SPACE
+    value: "OBSERVABILITY"
+  
+  # Execution mode (CRITICAL)
+  - name: EXECUTION_MODE
+    value: "PLAN_ONLY"  # PLAN_ONLY or EXECUTE (requires approval)
+  - name: REQUIRE_APPROVAL
+    value: "true"  # ALWAYS require human approval for restore
+  - name: APPROVAL_TIMEOUT
+    value: "300"  # 5 minutes (timeout = DENY)
+  
+  # Backup operations configuration
+  - name: ENABLE_SCHEDULED_BACKUPS
+    value: "true"
+  - name: ENABLE_ON_DEMAND_BACKUPS
+    value: "true"
+  - name: ENABLE_RESTORE_OPERATIONS
+    value: "true"
+  - name: ENABLE_BACKUP_DELETION
+    value: "false"  # Disabled by default (risky)
+  
+  # Backup schedule configuration
+  - name: BACKUP_SCHEDULE_DAILY
+    value: "0 2 * * *"  # 2 AM daily
+  - name: BACKUP_SCHEDULE_WEEKLY
+    value: "0 3 * * 0"  # 3 AM Sunday
+  - name: BACKUP_RETENTION_DAYS
+    value: "30"
+  
+  # Backup scope configuration
+  - name: BACKUP_INCLUDE_NAMESPACES
+    value: "nilabja-haldar-dev"
+  - name: BACKUP_INCLUDE_RESOURCES
+    value: "persistentvolumeclaims,persistentvolumes,configmaps,secrets"
+  - name: BACKUP_EXCLUDE_RESOURCES
+    value: "events,pods"
+  
+  # Monitoring configuration
+  - name: MONITORING_INTERVAL
+    value: "300"  # Check backup status every 5 minutes
+  - name: BACKUP_STATUS_CHECK_ENABLED
+    value: "true"
+  
+  # Metrics configuration
+  - name: METRICS_ENABLED
+    value: "true"
+  - name: METRICS_PORT
+    value: "8083"
+  - name: METRICS_PATH
+    value: "/metrics"
+
+# Resource limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8083
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8083
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# ServiceMonitor for Prometheus metrics scraping
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    prometheus: kube-prometheus
+
+# ServiceAccount for agent operations
+serviceAccount:
+  create: true
+  name: backup-restore-agent
+  annotations: {}
+
+# RBAC configuration (namespace-scoped only)
+rbac:
+  create: true
+  clusterRole: false
+  
+  rules:
+    # Read permissions for namespace resources
+    - apiGroups:
+        - ""
+      resources:
+        - persistentvolumeclaims
+        - persistentvolumes
+        - configmaps
+        - secrets
+        - pods
+        - services
+      verbs:
+        - get
+        - list
+        - watch
+    
+    # Velero backup resources (read-only in velero namespace)
+    - apiGroups:
+        - velero.io
+      resources:
+        - backups
+        - restores
+        - schedules
+        - backupstoragelocations
+      verbs:
+        - get
+        - list
+        - watch
+        - create  # For creating backup/restore requests
+    
+    # Argo Workflows resources (read-only in argo namespace)
+    - apiGroups:
+        - argoproj.io
+      resources:
+        - workflows
+      verbs:
+        - get
+        - list
+        - watch
+        - create  # For triggering backup/restore workflows
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Pod security context
+podSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# Volume mounts
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+  - name: cache
+    mountPath: /app/.cache
+  - name: velero-cli
+    mountPath: /usr/local/bin/velero
+
+volumes:
+  - name: tmp
+    emptyDir: {}
+  - name: cache
+    emptyDir: {}
+  - name: velero-cli
+    emptyDir: {}
+
+# Node selector (optional)
+nodeSelector: {}
+
+# Tolerations (optional)
+tolerations: []
+
+# Affinity rules for high availability
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - backup-restore-agent
+          topologyKey: kubernetes.io/hostname
+
+# Additional labels
+labels:
+  app: backup-restore-agent
+  component: ai-agents
+  tier: backup-restore
+  managed-by: helm
+
+# Additional annotations
+annotations:
+  description: "Backup/Restore Agent for automated backup operations and disaster recovery"
+  namespace: "nilabja-haldar-dev"
+
+# Backup operation templates
+backupOperations:
+  # On-demand backup
+  - name: "on_demand_backup"
+    description: "Create immediate backup of namespace resources"
+    requires_approval: false  # Backups don't require approval
+    steps:
+      - "Validate backup request"
+      - "Create Velero backup resource"
+      - "Monitor backup progress"
+      - "Verify backup completion"
+      - "Send Slack notification"
+      - "Document backup in Confluence"
+  
+  # Scheduled backup
+  - name: "scheduled_backup"
+    description: "Create scheduled backup via Velero schedule"
+    requires_approval: false
+    steps:
+      - "Validate schedule configuration"
+      - "Create Velero schedule resource"
+      - "Monitor schedule status"
+      - "Send Slack notification"
+      - "Document schedule in Confluence"
+  
+  # Database backup (via Argo Workflow)
+  - name: "database_backup"
+    description: "Backup PostgreSQL database via Argo Workflow"
+    requires_approval: false
+    steps:
+      - "Validate database connection"
+      - "Trigger Argo Workflow for pg_dump"
+      - "Monitor workflow progress"
+      - "Verify backup file in S3"
+      - "Send Slack notification"
+      - "Document backup in Confluence"
+
+# Restore operation templates
+restoreOperations:
+  # Namespace restore
+  - name: "namespace_restore"
+    description: "Restore namespace resources from backup"
+    requires_approval: true  # ALWAYS require approval for restore
+    approval_timeout: 300
+    steps:
+      - "Validate restore request"
+      - "List available backups"
+      - "Send Slack approval request with backup details"
+      - "Wait for human approval"
+      - "Create Velero restore resource"
+      - "Monitor restore progress"
+      - "Verify restore completion"
+      - "Send Slack notification"
+      - "Document restore in Confluence"
+  
+  # PVC restore
+  - name: "pvc_restore"
+    description: "Restore specific PVC from backup"
+    requires_approval: true
+    approval_timeout: 300
+    steps:
+      - "Validate PVC restore request"
+      - "List available backups with PVC"
+      - "Send Slack approval request"
+      - "Wait for human approval"
+      - "Create Velero restore with PVC filter"
+      - "Monitor restore progress"
+      - "Verify PVC restoration"
+      - "Send Slack notification"
+      - "Document restore in Confluence"
+  
+  # Database restore (via Argo Workflow)
+  - name: "database_restore"
+    description: "Restore PostgreSQL database from backup"
+    requires_approval: true
+    approval_timeout: 300
+    steps:
+      - "Validate database restore request"
+      - "List available database backups in S3"
+      - "Send Slack approval request with backup details"
+      - "Wait for human approval"
+      - "Trigger Argo Workflow for pg_restore"
+      - "Monitor workflow progress"
+      - "Verify database restoration"
+      - "Send Slack notification"
+      - "Document restore in Confluence"
+
+# Backup monitoring rules
+backupMonitoring:
+  # Failed backup detection
+  - name: "backup_failed"
+    description: "Detect failed backup operations"
+    condition: "status.phase == 'Failed'"
+    severity: "high"
+    notification: true
+  
+  # Backup taking too long
+  - name: "backup_timeout"
+    description: "Backup operation exceeding expected duration"
+    duration: "30m"
+    severity: "medium"
+    notification: true
+  
+  # No recent backups
+  - name: "no_recent_backup"
+    description: "No successful backup in last 24 hours"
+    duration: "24h"
+    severity: "high"
+    notification: true
+  
+  # Backup storage issues
+  - name: "backup_storage_error"
+    description: "Issues with backup storage location"
+    condition: "backupStorageLocation.status.phase != 'Available'"
+    severity: "critical"
+    notification: true
+
+# Metrics to track
+metrics:
+  custom:
+    - name: agent_backups_total
+      type: counter
+      description: "Total backup operations"
+      labels: ["backup_type", "status"]
+    
+    - name: agent_restores_total
+      type: counter
+      description: "Total restore operations"
+      labels: ["restore_type", "status"]
+    
+    - name: agent_backup_duration_seconds
+      type: histogram
+      description: "Time to complete backup"
+      labels: ["backup_type"]
+      buckets: [60, 300, 600, 1800, 3600]
+    
+    - name: agent_restore_duration_seconds
+      type: histogram
+      description: "Time to complete restore"
+      labels: ["restore_type"]
+      buckets: [60, 300, 600, 1800, 3600]
+    
+    - name: agent_backup_size_bytes
+      type: gauge
+      description: "Size of backup in bytes"
+      labels: ["backup_name"]
+    
+    - name: agent_approval_requests_total
+      type: counter
+      description: "Total restore approval requests"
+      labels: ["restore_type", "decision"]
+    
+    - name: agent_backup_age_seconds
+      type: gauge
+      description: "Age of most recent successful backup"
+
+# Made with Bob

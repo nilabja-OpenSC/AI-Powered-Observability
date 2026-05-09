@@ -1,0 +1,438 @@
+# Observability Agent Configuration for AI-Powered Observability Platform
+# Namespace: nilabja-haldar-dev
+# Purpose: Query metrics/logs, generate PromQL/LogQL, detect issues, send Slack notifications
+
+# Global settings
+global:
+  namespace: nilabja-haldar-dev
+
+# Deployment configuration
+replicaCount: 2
+
+image:
+  repository: observability-agent
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8081
+  targetPort: 8081
+
+# Ingress/Route configuration
+route:
+  enabled: true
+  host: observability-agent-nilabja-haldar-dev.apps.rosa.example.com
+  path: /
+  tls:
+    enabled: true
+    termination: edge
+
+# Environment variables
+env:
+  # Application settings
+  - name: APP_NAME
+    value: "observability-agent"
+  - name: APP_VERSION
+    value: "1.0.0"
+  - name: LOG_LEVEL
+    value: "INFO"
+  - name: LOG_FORMAT
+    value: "json"
+  
+  # LLM configuration (OpenAI)
+  - name: LLM_PROVIDER
+    value: "openai"
+  - name: OPENAI_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: llm-credentials
+        key: openai-api-key
+  - name: OPENAI_MODEL
+    value: "gpt-4"
+  - name: OPENAI_TEMPERATURE
+    value: "0.3"  # Lower for more deterministic queries
+  - name: OPENAI_MAX_TOKENS
+    value: "1500"
+  
+  # Alternative: Groq (faster for query generation)
+  - name: GROQ_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: llm-credentials
+        key: groq-api-key
+        optional: true
+  - name: GROQ_MODEL
+    value: "llama-3.1-70b-versatile"
+  
+  # Vector store configuration (Chroma)
+  - name: VECTOR_STORE_TYPE
+    value: "chroma"
+  - name: CHROMA_HOST
+    value: "chroma.nilabja-haldar-dev.svc.cluster.local"
+  - name: CHROMA_PORT
+    value: "8000"
+  - name: CHROMA_COLLECTION
+    value: "observability-memory"
+  
+  # Prometheus configuration
+  - name: PROMETHEUS_URL
+    value: "http://prometheus.nilabja-haldar-dev.svc.cluster.local:9090"
+  - name: PROMETHEUS_TIMEOUT
+    value: "30"  # seconds
+  
+  # Thanos configuration (for historical queries)
+  - name: THANOS_URL
+    value: "http://thanos-query.nilabja-haldar-dev.svc.cluster.local:9090"
+  - name: THANOS_TIMEOUT
+    value: "60"  # seconds
+  - name: THANOS_THRESHOLD_HOURS
+    value: "6"  # Use Thanos for queries > 6 hours
+  
+  # Loki configuration
+  - name: LOKI_URL
+    value: "http://loki.nilabja-haldar-dev.svc.cluster.local:3100"
+  - name: LOKI_TIMEOUT
+    value: "30"  # seconds
+  - name: LOKI_MAX_LINES
+    value: "1000"
+  
+  # Grafana configuration
+  - name: GRAFANA_URL
+    value: "http://grafana.nilabja-haldar-dev.svc.cluster.local:3000"
+  - name: GRAFANA_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: grafana-credentials
+        key: api-key
+  - name: GRAFANA_TIMEOUT
+    value: "30"  # seconds
+  
+  # Alertmanager configuration
+  - name: ALERTMANAGER_URL
+    value: "http://alertmanager.nilabja-haldar-dev.svc.cluster.local:9093"
+  - name: ALERTMANAGER_TIMEOUT
+    value: "10"  # seconds
+  
+  # Slack configuration (for issue notifications)
+  - name: SLACK_ENABLED
+    value: "true"
+  - name: SLACK_WEBHOOK_URL
+    valueFrom:
+      secretKeyRef:
+        name: slack-credentials
+        key: webhook-url
+  - name: SLACK_BOT_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: slack-credentials
+        key: bot-token
+  - name: SLACK_CHANNEL
+    value: "#observability-alerts"
+  - name: SLACK_TIMEOUT
+    value: "10"  # seconds
+  
+  # Confluence configuration (for incident documentation)
+  - name: CONFLUENCE_ENABLED
+    value: "true"
+  - name: CONFLUENCE_URL
+    value: "https://confluence.example.com"
+  - name: CONFLUENCE_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: confluence-credentials
+        key: username
+  - name: CONFLUENCE_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: confluence-credentials
+        key: api-token
+  - name: CONFLUENCE_SPACE
+    value: "OBSERVABILITY"
+  
+  # Query generation settings
+  - name: QUERY_NAMESPACE_FILTER
+    value: "nilabja-haldar-dev"  # ALWAYS include namespace filter
+  - name: QUERY_DEFAULT_TIME_RANGE
+    value: "1h"
+  - name: QUERY_MAX_TIME_RANGE
+    value: "7d"
+  
+  # Issue detection settings
+  - name: ISSUE_DETECTION_ENABLED
+    value: "true"
+  - name: ISSUE_DETECTION_INTERVAL
+    value: "60"  # seconds
+  - name: ISSUE_SEVERITY_THRESHOLD
+    value: "medium"  # low, medium, high, critical
+  
+  # Dashboard generation settings
+  - name: DASHBOARD_AUTO_CREATE
+    value: "true"
+  - name: DASHBOARD_FOLDER
+    value: "AI-Generated"
+  
+  # Metrics configuration
+  - name: METRICS_ENABLED
+    value: "true"
+  - name: METRICS_PORT
+    value: "8081"
+  - name: METRICS_PATH
+    value: "/metrics"
+
+# Resource limits
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8081
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8081
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# ServiceMonitor for Prometheus metrics scraping
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    prometheus: kube-prometheus
+
+# ServiceAccount for agent operations
+serviceAccount:
+  create: true
+  name: observability-agent
+  annotations: {}
+
+# RBAC configuration (namespace-scoped only)
+rbac:
+  create: true
+  clusterRole: false
+  
+  rules:
+    - apiGroups:
+        - ""
+      resources:
+        - pods
+        - services
+        - configmaps
+        - events
+      verbs:
+        - get
+        - list
+        - watch
+    
+    - apiGroups:
+        - apps
+      resources:
+        - deployments
+        - statefulsets
+        - daemonsets
+      verbs:
+        - get
+        - list
+        - watch
+    
+    - apiGroups:
+        - monitoring.coreos.com
+      resources:
+        - servicemonitors
+        - prometheusrules
+      verbs:
+        - get
+        - list
+        - watch
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Pod security context
+podSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# Volume mounts
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+  - name: cache
+    mountPath: /app/.cache
+
+volumes:
+  - name: tmp
+    emptyDir: {}
+  - name: cache
+    emptyDir: {}
+
+# Node selector (optional)
+nodeSelector: {}
+
+# Tolerations (optional)
+tolerations: []
+
+# Affinity rules for high availability
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - observability-agent
+          topologyKey: kubernetes.io/hostname
+
+# Additional labels
+labels:
+  app: observability-agent
+  component: ai-agents
+  tier: observability
+  managed-by: helm
+
+# Additional annotations
+annotations:
+  description: "Observability Agent for metrics/logs queries and issue detection"
+  namespace: "nilabja-haldar-dev"
+
+# Query templates (pre-defined queries for common scenarios)
+queryTemplates:
+  # Golden Signals
+  - name: "http_request_rate"
+    description: "HTTP request rate per second"
+    promql: 'rate(http_requests_total{namespace="nilabja-haldar-dev"}[5m])'
+  
+  - name: "http_error_rate"
+    description: "HTTP error rate (5xx responses)"
+    promql: 'rate(http_requests_total{namespace="nilabja-haldar-dev",status=~"5.."}[5m])'
+  
+  - name: "http_latency_p95"
+    description: "HTTP request latency (95th percentile)"
+    promql: 'histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{namespace="nilabja-haldar-dev"}[5m]))'
+  
+  - name: "pod_cpu_usage"
+    description: "Pod CPU usage percentage"
+    promql: 'rate(container_cpu_usage_seconds_total{namespace="nilabja-haldar-dev"}[5m]) * 100'
+  
+  - name: "pod_memory_usage"
+    description: "Pod memory usage in MB"
+    promql: 'container_memory_usage_bytes{namespace="nilabja-haldar-dev"} / 1024 / 1024'
+  
+  # Log queries
+  - name: "error_logs"
+    description: "Error logs in the last hour"
+    logql: '{namespace="nilabja-haldar-dev"} |= "error" | json'
+  
+  - name: "pod_logs"
+    description: "Logs for a specific pod"
+    logql: '{namespace="nilabja-haldar-dev",pod=~".*"} | json'
+
+# Issue detection rules
+issueDetectionRules:
+  # Pod health issues
+  - name: "pod_crash_loop"
+    description: "Detect pods in CrashLoopBackOff"
+    query: 'kube_pod_container_status_waiting_reason{namespace="nilabja-haldar-dev",reason="CrashLoopBackOff"} > 0'
+    severity: "high"
+    notification: true
+  
+  - name: "pod_oom_killed"
+    description: "Detect OOMKilled pods"
+    query: 'kube_pod_container_status_last_terminated_reason{namespace="nilabja-haldar-dev",reason="OOMKilled"} > 0'
+    severity: "critical"
+    notification: true
+  
+  - name: "pod_not_ready"
+    description: "Detect pods not ready for >5 minutes"
+    query: 'kube_pod_status_ready{namespace="nilabja-haldar-dev",condition="false"} > 0'
+    severity: "medium"
+    notification: true
+  
+  # Performance issues
+  - name: "high_error_rate"
+    description: "HTTP error rate > 5%"
+    query: 'rate(http_requests_total{namespace="nilabja-haldar-dev",status=~"5.."}[5m]) / rate(http_requests_total{namespace="nilabja-haldar-dev"}[5m]) > 0.05'
+    severity: "high"
+    notification: true
+  
+  - name: "high_latency"
+    description: "P95 latency > 1 second"
+    query: 'histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{namespace="nilabja-haldar-dev"}[5m])) > 1'
+    severity: "medium"
+    notification: true
+  
+  - name: "high_cpu_usage"
+    description: "CPU usage > 80%"
+    query: 'rate(container_cpu_usage_seconds_total{namespace="nilabja-haldar-dev"}[5m]) * 100 > 80'
+    severity: "medium"
+    notification: true
+  
+  - name: "high_memory_usage"
+    description: "Memory usage > 80%"
+    query: 'container_memory_usage_bytes{namespace="nilabja-haldar-dev"} / container_spec_memory_limit_bytes{namespace="nilabja-haldar-dev"} * 100 > 80'
+    severity: "medium"
+    notification: true
+
+# Metrics to track
+metrics:
+  custom:
+    - name: agent_queries_total
+      type: counter
+      description: "Total queries processed by observability agent"
+      labels: ["query_type", "data_source"]
+    
+    - name: agent_query_duration_seconds
+      type: histogram
+      description: "Time to execute query"
+      labels: ["query_type", "data_source"]
+      buckets: [0.1, 0.5, 1.0, 5.0, 10.0]
+    
+    - name: agent_issues_detected_total
+      type: counter
+      description: "Total issues detected"
+      labels: ["severity", "issue_type"]
+    
+    - name: agent_slack_notifications_total
+      type: counter
+      description: "Total Slack notifications sent"
+      labels: ["severity", "status"]
+    
+    - name: agent_promql_generation_duration_seconds
+      type: histogram
+      description: "Time to generate PromQL from natural language"
+      buckets: [0.5, 1.0, 2.0, 5.0]
+    
+    - name: agent_logql_generation_duration_seconds
+      type: histogram
+      description: "Time to generate LogQL from natural language"
+      buckets: [0.5, 1.0, 2.0, 5.0]
+
+# Made with Bob

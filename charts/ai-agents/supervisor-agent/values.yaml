@@ -1,0 +1,341 @@
+# Supervisor Agent Configuration for AI-Powered Observability Platform
+# Namespace: nilabja-haldar-dev
+# Purpose: Route queries to specialist agents (Observability, Pod Recovery, Backup/Restore)
+
+# Global settings
+global:
+  namespace: nilabja-haldar-dev
+
+# Deployment configuration
+replicaCount: 2
+
+image:
+  repository: supervisor-agent
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+  # WebSocket support
+  websocket:
+    enabled: true
+    path: /ws
+
+# Ingress/Route configuration
+route:
+  enabled: true
+  host: supervisor-agent-nilabja-haldar-dev.apps.rosa.example.com
+  path: /
+  tls:
+    enabled: true
+    termination: edge
+
+# Environment variables
+env:
+  # Application settings
+  - name: APP_NAME
+    value: "supervisor-agent"
+  - name: APP_VERSION
+    value: "1.0.0"
+  - name: LOG_LEVEL
+    value: "INFO"
+  - name: LOG_FORMAT
+    value: "json"
+  
+  # LLM configuration (OpenAI)
+  - name: LLM_PROVIDER
+    value: "openai"
+  - name: OPENAI_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: llm-credentials
+        key: openai-api-key
+  - name: OPENAI_MODEL
+    value: "gpt-4"
+  - name: OPENAI_TEMPERATURE
+    value: "0.7"
+  - name: OPENAI_MAX_TOKENS
+    value: "2000"
+  
+  # Alternative: Groq (faster, cheaper)
+  - name: GROQ_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: llm-credentials
+        key: groq-api-key
+        optional: true
+  - name: GROQ_MODEL
+    value: "llama-3.1-70b-versatile"
+  
+  # Vector store configuration (Chroma)
+  - name: VECTOR_STORE_TYPE
+    value: "chroma"
+  - name: CHROMA_HOST
+    value: "chroma.nilabja-haldar-dev.svc.cluster.local"
+  - name: CHROMA_PORT
+    value: "8000"
+  - name: CHROMA_COLLECTION
+    value: "supervisor-memory"
+  
+  # Agent endpoints
+  - name: OBSERVABILITY_AGENT_URL
+    value: "http://observability-agent.nilabja-haldar-dev.svc.cluster.local:8081"
+  - name: POD_RECOVERY_AGENT_URL
+    value: "http://pod-recovery-agent.nilabja-haldar-dev.svc.cluster.local:8082"
+  - name: BACKUP_RESTORE_AGENT_URL
+    value: "http://backup-restore-agent.nilabja-haldar-dev.svc.cluster.local:8083"
+  
+  # Routing configuration
+  - name: ROUTING_STRATEGY
+    value: "intent-based"  # intent-based, keyword-based, or hybrid
+  - name: ROUTING_CONFIDENCE_THRESHOLD
+    value: "0.7"
+  - name: ENABLE_MULTI_AGENT_COLLABORATION
+    value: "true"
+  
+  # WebSocket configuration
+  - name: WEBSOCKET_ENABLED
+    value: "true"
+  - name: WEBSOCKET_PING_INTERVAL
+    value: "30"  # seconds
+  - name: WEBSOCKET_TIMEOUT
+    value: "300"  # seconds
+  
+  # Metrics configuration
+  - name: METRICS_ENABLED
+    value: "true"
+  - name: METRICS_PORT
+    value: "8080"
+  - name: METRICS_PATH
+    value: "/metrics"
+
+# Resource limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# ServiceMonitor for Prometheus metrics scraping
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    prometheus: kube-prometheus
+
+# ServiceAccount for agent operations
+serviceAccount:
+  create: true
+  name: supervisor-agent
+  annotations: {}
+
+# RBAC configuration (namespace-scoped only)
+rbac:
+  create: true
+  # Namespace-scoped role (NOT cluster-wide)
+  clusterRole: false
+  
+  # Permissions required for routing and coordination
+  rules:
+    - apiGroups:
+        - ""
+      resources:
+        - pods
+        - services
+        - configmaps
+      verbs:
+        - get
+        - list
+        - watch
+    
+    - apiGroups:
+        - apps
+      resources:
+        - deployments
+        - statefulsets
+      verbs:
+        - get
+        - list
+        - watch
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Pod security context
+podSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# Volume mounts
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+  - name: cache
+    mountPath: /app/.cache
+
+volumes:
+  - name: tmp
+    emptyDir: {}
+  - name: cache
+    emptyDir: {}
+
+# Node selector (optional)
+nodeSelector: {}
+
+# Tolerations (optional)
+tolerations: []
+
+# Affinity rules for high availability
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - supervisor-agent
+          topologyKey: kubernetes.io/hostname
+
+# Additional labels
+labels:
+  app: supervisor-agent
+  component: ai-agents
+  tier: orchestration
+  managed-by: helm
+
+# Additional annotations
+annotations:
+  description: "Supervisor Agent for routing queries to specialist agents"
+  namespace: "nilabja-haldar-dev"
+
+# Agent routing configuration
+routing:
+  # Intent classification
+  intents:
+    # Observability queries
+    observability:
+      keywords:
+        - metrics
+        - logs
+        - dashboard
+        - grafana
+        - prometheus
+        - loki
+        - query
+        - visualize
+        - alert
+        - monitor
+      agent: observability-agent
+      confidence_threshold: 0.7
+    
+    # Pod recovery operations
+    pod_recovery:
+      keywords:
+        - pod
+        - restart
+        - scale
+        - crash
+        - failing
+        - unhealthy
+        - recovery
+        - fix
+      agent: pod-recovery-agent
+      confidence_threshold: 0.7
+    
+    # Backup/restore operations
+    backup_restore:
+      keywords:
+        - backup
+        - restore
+        - snapshot
+        - recovery
+        - velero
+        - database
+        - pvc
+      agent: backup-restore-agent
+      confidence_threshold: 0.7
+  
+  # Fallback behavior
+  fallback:
+    enabled: true
+    default_agent: observability-agent
+    message: "I'm not sure which agent can help with that. Routing to Observability Agent."
+
+# Agent collaboration
+collaboration:
+  enabled: true
+  # Allow agents to call each other
+  cross_agent_calls: true
+  # Max collaboration depth (prevent infinite loops)
+  max_depth: 3
+
+# Conversation memory
+memory:
+  enabled: true
+  # Store conversation history in vector store
+  vector_store: true
+  # Max messages to keep in memory
+  max_messages: 100
+  # Message retention (hours)
+  retention_hours: 24
+
+# Metrics to track
+metrics:
+  custom:
+    - name: agent_requests_total
+      type: counter
+      description: "Total requests to supervisor agent"
+      labels: ["intent", "routed_agent"]
+    
+    - name: agent_routing_duration_seconds
+      type: histogram
+      description: "Time to route request to agent"
+      labels: ["intent", "routed_agent"]
+      buckets: [0.01, 0.05, 0.1, 0.5, 1.0]
+    
+    - name: agent_collaboration_total
+      type: counter
+      description: "Total cross-agent collaborations"
+      labels: ["source_agent", "target_agent"]
+    
+    - name: websocket_connections
+      type: gauge
+      description: "Active WebSocket connections"
+
+# Made with Bob

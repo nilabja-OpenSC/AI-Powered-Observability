@@ -1,0 +1,16 @@
+apiVersion: v2
+name: prometheus
+description: Prometheus metrics server for namespace-scoped monitoring
+type: application
+version: 1.0.0
+appVersion: "v2.45.0"
+keywords:
+  - prometheus
+  - monitoring
+  - metrics
+  - observability
+maintainers:
+  - name: AI-Powered Observability Team
+dependencies: []
+
+# Made with Bob

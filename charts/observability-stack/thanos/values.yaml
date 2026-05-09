@@ -1,0 +1,262 @@
+# Thanos Configuration for AI-Powered Observability Platform
+# Namespace: nilabja-haldar-dev
+# Purpose: Long-term metrics storage and querying
+
+# Global settings
+global:
+  namespace: nilabja-haldar-dev
+  storageClass: efs-sc  # EFS CSI storage class
+
+# Thanos Query component
+# Provides unified query interface across Prometheus and long-term storage
+query:
+  enabled: true
+  replicaCount: 2
+  
+  image:
+    repository: quay.io/thanos/thanos
+    tag: v0.35.0
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 9090
+    grpcPort: 10901
+  
+  # Query configuration
+  config:
+    # Query timeout
+    query.timeout: 5m
+    # Max concurrent queries
+    query.max-concurrent: 20
+    # Query lookback delta
+    query.lookback-delta: 5m
+    # Auto downsampling
+    query.auto-downsampling: true
+  
+  # Store endpoints (Prometheus sidecars)
+  stores:
+    - prometheus-thanos-sidecar.nilabja-haldar-dev.svc.cluster.local:10901
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  
+  # Liveness and readiness probes
+  livenessProbe:
+    httpGet:
+      path: /-/healthy
+      port: 9090
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  
+  readinessProbe:
+    httpGet:
+      path: /-/ready
+      port: 9090
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+# Thanos Store Gateway
+# Provides access to historical metrics from object storage
+storeGateway:
+  enabled: true
+  replicaCount: 1
+  
+  image:
+    repository: quay.io/thanos/thanos
+    tag: v0.35.0
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 9090
+    grpcPort: 10901
+  
+  # Persistent volume for index cache
+  persistence:
+    enabled: true
+    storageClass: efs-sc
+    accessMode: ReadWriteOnce
+    size: 10Gi
+  
+  # Object storage configuration (filesystem for demo)
+  objstore:
+    type: FILESYSTEM
+    config:
+      directory: /data/thanos-storage
+  
+  # Index cache configuration
+  indexCache:
+    type: IN-MEMORY
+    config:
+      max_size: 250MB
+      max_item_size: 125MB
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  
+  # Liveness and readiness probes
+  livenessProbe:
+    httpGet:
+      path: /-/healthy
+      port: 9090
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  
+  readinessProbe:
+    httpGet:
+      path: /-/ready
+      port: 9090
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+# Thanos Compactor
+# Compacts and downsamples historical metrics
+compactor:
+  enabled: true
+  replicaCount: 1
+  
+  image:
+    repository: quay.io/thanos/thanos
+    tag: v0.35.0
+    pullPolicy: IfNotPresent
+  
+  # Persistent volume for temporary data
+  persistence:
+    enabled: true
+    storageClass: efs-sc
+    accessMode: ReadWriteOnce
+    size: 20Gi
+  
+  # Object storage configuration (filesystem for demo)
+  objstore:
+    type: FILESYSTEM
+    config:
+      directory: /data/thanos-storage
+  
+  # Compaction configuration
+  config:
+    # Retention for raw samples (10 days)
+    retention.resolution-raw: 10d
+    # Retention for 5m downsampled data (30 days)
+    retention.resolution-5m: 30d
+    # Retention for 1h downsampled data (90 days)
+    retention.resolution-1h: 90d
+    # Compaction concurrency
+    compact.concurrency: 1
+    # Downsampling
+    downsampling.disable: false
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  
+  # Liveness probe
+  livenessProbe:
+    httpGet:
+      path: /-/healthy
+      port: 10902
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+# Thanos Ruler (optional)
+# Evaluates recording and alerting rules against Thanos Query
+ruler:
+  enabled: false  # Disabled - using Prometheus for alerting
+  replicaCount: 1
+  
+  image:
+    repository: quay.io/thanos/thanos
+    tag: v0.35.0
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 9090
+    grpcPort: 10901
+  
+  # Persistent volume for rule evaluation state
+  persistence:
+    enabled: true
+    storageClass: efs-sc
+    accessMode: ReadWriteOnce
+    size: 5Gi
+  
+  # Query endpoint
+  queryEndpoint: thanos-query.nilabja-haldar-dev.svc.cluster.local:9090
+  
+  # Alertmanager endpoints
+  alertmanagers:
+    - alertmanager.nilabja-haldar-dev.svc.cluster.local:9093
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# ServiceMonitor for Prometheus metrics scraping
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    prometheus: kube-prometheus
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Pod security context
+podSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# Node selector (optional)
+nodeSelector: {}
+
+# Tolerations (optional)
+tolerations: []
+
+# Affinity rules (optional)
+affinity: {}
+
+# Additional labels
+labels:
+  app: thanos
+  component: observability
+  managed-by: helm
+
+# Additional annotations
+annotations:
+  description: "Thanos for long-term Prometheus metrics storage"
+  namespace: "nilabja-haldar-dev"
+
+# Made with Bob

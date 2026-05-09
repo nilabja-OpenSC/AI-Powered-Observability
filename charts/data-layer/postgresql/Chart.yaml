@@ -1,0 +1,14 @@
+apiVersion: v2
+name: postgresql
+description: PostgreSQL database for e-commerce application with PVC-backed storage
+type: application
+version: 1.0.0
+appVersion: "15.0"
+keywords:
+  - postgresql
+  - database
+  - sql
+maintainers:
+  - name: AI-Powered Observability Team
+
+# Made with Bob

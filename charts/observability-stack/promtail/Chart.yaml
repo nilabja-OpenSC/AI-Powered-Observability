@@ -1,0 +1,16 @@
+apiVersion: v2
+name: promtail
+description: Promtail log collector agent for Loki
+type: application
+version: 1.0.0
+appVersion: "2.8.0"
+keywords:
+  - promtail
+  - logging
+  - logs
+  - loki
+  - observability
+maintainers:
+  - name: AI-Powered Observability Team
+
+# Made with Bob

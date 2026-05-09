@@ -1,0 +1,19 @@
+apiVersion: v2
+name: backup-restore-agent
+description: Backup/Restore Agent for automated backup operations and disaster recovery
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - ai
+  - agent
+  - backup
+  - restore
+  - velero
+  - disaster-recovery
+maintainers:
+  - name: AI-Powered Observability Team
+    email: observability@example.com
+dependencies: []
+
+# Made with Bob

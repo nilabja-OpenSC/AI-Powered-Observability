@@ -1,0 +1,465 @@
+# Argo Workflows Configuration for AI-Powered Observability Platform
+# Namespace: nilabja-haldar-dev
+# Purpose: Orchestrate backup and restore operations
+
+# Global settings
+global:
+  namespace: nilabja-haldar-dev
+
+# Argo Workflow Controller
+controller:
+  image:
+    repository: quay.io/argoproj/workflow-controller
+    tag: v3.5.0
+    pullPolicy: IfNotPresent
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  
+  # Workflow defaults
+  workflowDefaults:
+    spec:
+      # Default service account for workflows
+      serviceAccountName: argo-workflow
+      
+      # Pod garbage collection
+      podGC:
+        strategy: OnWorkflowSuccess
+        deleteDelayDuration: 300s  # 5 minutes
+      
+      # Workflow TTL (auto-delete after completion)
+      ttlStrategy:
+        secondsAfterCompletion: 86400  # 24 hours
+        secondsAfterSuccess: 86400
+        secondsAfterFailure: 604800  # 7 days
+  
+  # Namespace-scoped configuration
+  # CRITICAL: Workflows operate ONLY in nilabja-haldar-dev namespace
+  namespaced: true
+  
+  # Metrics
+  metricsConfig:
+    enabled: true
+    path: /metrics
+    port: 9090
+  
+  # Telemetry
+  telemetryConfig:
+    enabled: true
+    path: /telemetry
+    port: 8081
+
+# Argo Server (UI and API)
+server:
+  enabled: true
+  
+  image:
+    repository: quay.io/argoproj/argocli
+    tag: v3.5.0
+    pullPolicy: IfNotPresent
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 2746
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  
+  # Authentication (disabled for demo, enable in production)
+  authMode: server
+  
+  # Secure mode (enable in production)
+  secure: false
+  
+  # Base href for UI
+  baseHref: /
+
+# ServiceAccount for workflows
+serviceAccount:
+  create: true
+  name: argo-workflow
+  annotations: {}
+
+# RBAC configuration (namespace-scoped only)
+rbac:
+  create: true
+  # Namespace-scoped role (NOT cluster-wide)
+  clusterRole: false
+  
+  # Permissions required for workflows
+  rules:
+    - apiGroups:
+        - ""
+      resources:
+        - pods
+        - pods/log
+        - pods/exec
+        - configmaps
+        - secrets
+        - services
+      verbs:
+        - get
+        - list
+        - watch
+        - create
+        - update
+        - patch
+        - delete
+    
+    - apiGroups:
+        - apps
+      resources:
+        - deployments
+        - statefulsets
+      verbs:
+        - get
+        - list
+        - watch
+        - patch
+    
+    - apiGroups:
+        - batch
+      resources:
+        - jobs
+      verbs:
+        - get
+        - list
+        - watch
+        - create
+        - delete
+    
+    - apiGroups:
+        - argoproj.io
+      resources:
+        - workflows
+        - workflows/finalizers
+        - workflowtemplates
+        - cronworkflows
+        - clusterworkflowtemplates
+      verbs:
+        - get
+        - list
+        - watch
+        - create
+        - update
+        - patch
+        - delete
+    
+    - apiGroups:
+        - velero.io
+      resources:
+        - backups
+        - restores
+      verbs:
+        - get
+        - list
+        - watch
+        - create
+        - delete
+
+# Workflow templates for backup/restore operations
+workflowTemplates:
+  # PostgreSQL backup workflow
+  postgresqlBackup:
+    enabled: true
+    name: postgresql-backup
+    spec:
+      entrypoint: backup-database
+      serviceAccountName: argo-workflow
+      
+      templates:
+        - name: backup-database
+          steps:
+            - - name: pre-backup-check
+                template: check-database-health
+            
+            - - name: create-velero-backup
+                template: velero-backup
+                arguments:
+                  parameters:
+                    - name: backup-name
+                      value: "postgresql-{{workflow.creationTimestamp}}"
+            
+            - - name: verify-backup
+                template: verify-velero-backup
+                arguments:
+                  parameters:
+                    - name: backup-name
+                      value: "postgresql-{{workflow.creationTimestamp}}"
+            
+            - - name: notify-slack
+                template: send-slack-notification
+                arguments:
+                  parameters:
+                    - name: message
+                      value: "✅ PostgreSQL backup completed: postgresql-{{workflow.creationTimestamp}}"
+        
+        - name: check-database-health
+          script:
+            image: postgres:15
+            command: [bash]
+            source: |
+              echo "Checking PostgreSQL health..."
+              pg_isready -h postgresql.nilabja-haldar-dev.svc.cluster.local -p 5432 -U postgres
+              if [ $? -eq 0 ]; then
+                echo "PostgreSQL is healthy"
+                exit 0
+              else
+                echo "PostgreSQL is not healthy"
+                exit 1
+              fi
+        
+        - name: velero-backup
+          inputs:
+            parameters:
+              - name: backup-name
+          script:
+            image: velero/velero:v1.13.0
+            command: [bash]
+            source: |
+              echo "Creating Velero backup: {{inputs.parameters.backup-name}}"
+              velero backup create {{inputs.parameters.backup-name}} \
+                --include-namespaces nilabja-haldar-dev \
+                --selector app=postgresql \
+                --snapshot-volumes \
+                --wait
+        
+        - name: verify-velero-backup
+          inputs:
+            parameters:
+              - name: backup-name
+          script:
+            image: velero/velero:v1.13.0
+            command: [bash]
+            source: |
+              echo "Verifying backup: {{inputs.parameters.backup-name}}"
+              velero backup describe {{inputs.parameters.backup-name}}
+              STATUS=$(velero backup get {{inputs.parameters.backup-name}} -o json | jq -r '.status.phase')
+              if [ "$STATUS" == "Completed" ]; then
+                echo "Backup completed successfully"
+                exit 0
+              else
+                echo "Backup failed with status: $STATUS"
+                exit 1
+              fi
+        
+        - name: send-slack-notification
+          inputs:
+            parameters:
+              - name: message
+          script:
+            image: curlimages/curl:latest
+            command: [sh]
+            source: |
+              echo "Sending Slack notification..."
+              curl -X POST $SLACK_WEBHOOK_URL \
+                -H 'Content-Type: application/json' \
+                -d "{\"text\": \"{{inputs.parameters.message}}\"}"
+            env:
+              - name: SLACK_WEBHOOK_URL
+                valueFrom:
+                  secretKeyRef:
+                    name: slack-webhook
+                    key: webhook-url
+  
+  # PostgreSQL restore workflow
+  postgresqlRestore:
+    enabled: true
+    name: postgresql-restore
+    spec:
+      entrypoint: restore-database
+      serviceAccountName: argo-workflow
+      
+      arguments:
+        parameters:
+          - name: backup-name
+            value: ""  # Must be provided when triggering workflow
+      
+      templates:
+        - name: restore-database
+          steps:
+            - - name: scale-down-app
+                template: scale-deployment
+                arguments:
+                  parameters:
+                    - name: deployment
+                      value: "backend-api"
+                    - name: replicas
+                      value: "0"
+            
+            - - name: restore-velero-backup
+                template: velero-restore
+                arguments:
+                  parameters:
+                    - name: backup-name
+                      value: "{{workflow.parameters.backup-name}}"
+            
+            - - name: verify-restore
+                template: verify-database-restore
+            
+            - - name: scale-up-app
+                template: scale-deployment
+                arguments:
+                  parameters:
+                    - name: deployment
+                      value: "backend-api"
+                    - name: replicas
+                      value: "3"
+            
+            - - name: notify-slack
+                template: send-slack-notification
+                arguments:
+                  parameters:
+                    - name: message
+                      value: "✅ PostgreSQL restore completed from: {{workflow.parameters.backup-name}}"
+        
+        - name: scale-deployment
+          inputs:
+            parameters:
+              - name: deployment
+              - name: replicas
+          script:
+            image: bitnami/kubectl:latest
+            command: [bash]
+            source: |
+              echo "Scaling {{inputs.parameters.deployment}} to {{inputs.parameters.replicas}} replicas..."
+              kubectl scale deployment {{inputs.parameters.deployment}} \
+                --replicas={{inputs.parameters.replicas}} \
+                -n nilabja-haldar-dev
+              kubectl rollout status deployment {{inputs.parameters.deployment}} \
+                -n nilabja-haldar-dev \
+                --timeout=5m
+        
+        - name: velero-restore
+          inputs:
+            parameters:
+              - name: backup-name
+          script:
+            image: velero/velero:v1.13.0
+            command: [bash]
+            source: |
+              echo "Restoring from backup: {{inputs.parameters.backup-name}}"
+              velero restore create restore-{{workflow.creationTimestamp}} \
+                --from-backup {{inputs.parameters.backup-name}} \
+                --wait
+        
+        - name: verify-database-restore
+          script:
+            image: postgres:15
+            command: [bash]
+            source: |
+              echo "Verifying PostgreSQL restore..."
+              sleep 30  # Wait for database to be ready
+              pg_isready -h postgresql.nilabja-haldar-dev.svc.cluster.local -p 5432 -U postgres
+              if [ $? -eq 0 ]; then
+                echo "PostgreSQL is healthy after restore"
+                # Verify data integrity
+                PGPASSWORD=$POSTGRES_PASSWORD psql -h postgresql.nilabja-haldar-dev.svc.cluster.local \
+                  -U postgres -d ecommerce -c "SELECT COUNT(*) FROM users;"
+                exit 0
+              else
+                echo "PostgreSQL is not healthy after restore"
+                exit 1
+              fi
+            env:
+              - name: POSTGRES_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: postgresql-secret
+                    key: postgres-password
+        
+        - name: send-slack-notification
+          inputs:
+            parameters:
+              - name: message
+          script:
+            image: curlimages/curl:latest
+            command: [sh]
+            source: |
+              echo "Sending Slack notification..."
+              curl -X POST $SLACK_WEBHOOK_URL \
+                -H 'Content-Type: application/json' \
+                -d "{\"text\": \"{{inputs.parameters.message}}\"}"
+            env:
+              - name: SLACK_WEBHOOK_URL
+                valueFrom:
+                  secretKeyRef:
+                    name: slack-webhook
+                    key: webhook-url
+
+# CronWorkflows for scheduled backups
+cronWorkflows:
+  # Daily PostgreSQL backup at 2 AM UTC
+  dailyPostgresqlBackup:
+    enabled: true
+    name: daily-postgresql-backup
+    spec:
+      schedule: "0 2 * * *"
+      timezone: "UTC"
+      concurrencyPolicy: "Forbid"
+      successfulJobsHistoryLimit: 3
+      failedJobsHistoryLimit: 3
+      workflowSpec:
+        entrypoint: backup-database
+        serviceAccountName: argo-workflow
+        workflowTemplateRef:
+          name: postgresql-backup
+
+# ServiceMonitor for Prometheus metrics scraping
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    prometheus: kube-prometheus
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Pod security context
+podSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# Node selector (optional)
+nodeSelector: {}
+
+# Tolerations (optional)
+tolerations: []
+
+# Affinity rules (optional)
+affinity: {}
+
+# Additional labels
+labels:
+  app: argo-workflows
+  component: backup-restore
+  managed-by: helm
+
+# Additional annotations
+annotations:
+  description: "Argo Workflows for backup and restore orchestration"
+  namespace: "nilabja-haldar-dev"
+
+# Made with Bob
