@@ -1,0 +1,346 @@
+# Chat UI Configuration for AI-Powered Observability Platform
+# Namespace: nilabja-haldar-dev
+# Purpose: Next.js chat interface for observability queries ONLY (NO issue notifications)
+
+# Global settings
+global:
+  namespace: nilabja-haldar-dev
+
+# Deployment configuration
+replicaCount: 2
+
+image:
+  repository: chat-ui
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 3001
+  targetPort: 3001
+
+# Ingress/Route configuration
+route:
+  enabled: true
+  host: chat-nilabja-haldar-dev.apps.rosa.example.com
+  path: /
+  tls:
+    enabled: true
+    termination: edge
+
+# Environment variables
+env:
+  # Application settings
+  - name: APP_NAME
+    value: "chat-ui"
+  - name: APP_VERSION
+    value: "1.0.0"
+  - name: NODE_ENV
+    value: "production"
+  
+  # Agent API connection
+  - name: NEXT_PUBLIC_AGENT_API_URL
+    value: "http://supervisor-agent.nilabja-haldar-dev.svc.cluster.local:8080"
+  - name: NEXT_PUBLIC_AGENT_WS_URL
+    value: "ws://supervisor-agent.nilabja-haldar-dev.svc.cluster.local:8080/ws"
+  
+  # Observability data sources
+  - name: NEXT_PUBLIC_PROMETHEUS_URL
+    value: "http://prometheus.nilabja-haldar-dev.svc.cluster.local:9090"
+  - name: NEXT_PUBLIC_THANOS_URL
+    value: "http://thanos-query.nilabja-haldar-dev.svc.cluster.local:9090"
+  - name: NEXT_PUBLIC_GRAFANA_URL
+    value: "http://grafana.nilabja-haldar-dev.svc.cluster.local:3000"
+  - name: NEXT_PUBLIC_LOKI_URL
+    value: "http://loki.nilabja-haldar-dev.svc.cluster.local:3100"
+  
+  # Feature flags - CRITICAL: Chat UI is ONLY for queries
+  - name: NEXT_PUBLIC_ENABLE_METRICS_QUERY
+    value: "true"
+  - name: NEXT_PUBLIC_ENABLE_LOGS_QUERY
+    value: "true"
+  - name: NEXT_PUBLIC_ENABLE_DASHBOARD_QUERY
+    value: "true"
+  - name: NEXT_PUBLIC_ENABLE_ALERT_QUERY
+    value: "true"
+  - name: NEXT_PUBLIC_ENABLE_ISSUE_NOTIFICATIONS
+    value: "false"  # CRITICAL: NO issue notifications in Chat UI
+  - name: NEXT_PUBLIC_ENABLE_APPROVAL_WORKFLOW
+    value: "false"  # CRITICAL: NO approval workflow in Chat UI
+  
+  # UI settings
+  - name: NEXT_PUBLIC_MAX_MESSAGES
+    value: "100"
+  - name: NEXT_PUBLIC_MESSAGE_RETENTION_HOURS
+    value: "24"
+  - name: NEXT_PUBLIC_ENABLE_MESSAGE_HISTORY
+    value: "true"
+  
+  # Query settings
+  - name: NEXT_PUBLIC_DEFAULT_TIME_RANGE
+    value: "1h"
+  - name: NEXT_PUBLIC_MAX_QUERY_RESULTS
+    value: "1000"
+  - name: NEXT_PUBLIC_QUERY_TIMEOUT_MS
+    value: "30000"
+
+# Resource limits
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /
+    port: 3001
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: 3001
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Pod security context
+podSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# Volume mounts for Next.js cache
+volumeMounts:
+  - name: nextjs-cache
+    mountPath: /app/.next/cache
+  - name: tmp
+    mountPath: /tmp
+
+volumes:
+  - name: nextjs-cache
+    emptyDir: {}
+  - name: tmp
+    emptyDir: {}
+
+# Node selector (optional)
+nodeSelector: {}
+
+# Tolerations (optional)
+tolerations: []
+
+# Affinity rules for high availability
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - chat-ui
+          topologyKey: kubernetes.io/hostname
+
+# Additional labels
+labels:
+  app: chat-ui
+  component: observability
+  tier: frontend
+  managed-by: helm
+
+# Additional annotations
+annotations:
+  description: "Chat UI for observability queries ONLY (NO issue notifications)"
+  namespace: "nilabja-haldar-dev"
+  scope: "observability-queries-only"
+
+# Chat UI features configuration
+features:
+  # Query capabilities (ENABLED)
+  queries:
+    # Prometheus/Thanos metrics queries
+    metrics:
+      enabled: true
+      capabilities:
+        - natural-language-to-promql
+        - query-execution
+        - result-visualization
+        - query-history
+        - query-suggestions
+      examples:
+        - "Show me CPU usage for backend-api pods"
+        - "What's the error rate for the last hour?"
+        - "Display memory usage trends"
+    
+    # Loki log queries
+    logs:
+      enabled: true
+      capabilities:
+        - natural-language-to-logql
+        - log-search
+        - log-filtering
+        - log-streaming
+        - log-context
+      examples:
+        - "Show me error logs from backend-api"
+        - "Find logs containing 'database connection'"
+        - "Stream logs from postgresql pod"
+    
+    # Grafana dashboard queries
+    dashboards:
+      enabled: true
+      capabilities:
+        - dashboard-listing
+        - dashboard-viewing
+        - dashboard-creation
+        - panel-queries
+        - dashboard-sharing
+      examples:
+        - "Show me the application overview dashboard"
+        - "Create a dashboard for database metrics"
+        - "List all available dashboards"
+    
+    # Alert queries (view only, NO management)
+    alerts:
+      enabled: true
+      capabilities:
+        - alert-listing
+        - alert-status
+        - alert-history
+        - alert-details
+      examples:
+        - "Show me active alerts"
+        - "What alerts fired in the last hour?"
+        - "Display alert history for backend-api"
+  
+  # Issue management (DISABLED - use Slack)
+  issues:
+    notifications:
+      enabled: false  # CRITICAL: NO issue notifications
+    approval_workflow:
+      enabled: false  # CRITICAL: NO approval workflow
+    corrective_actions:
+      enabled: false  # CRITICAL: NO corrective actions
+  
+  # Chat features
+  chat:
+    # Message history
+    history:
+      enabled: true
+      retention_hours: 24
+      max_messages: 100
+    
+    # Suggested queries
+    suggestions:
+      enabled: true
+      categories:
+        - metrics
+        - logs
+        - dashboards
+        - alerts
+    
+    # Query templates
+    templates:
+      enabled: true
+      predefined:
+        - name: "CPU Usage"
+          query: "Show CPU usage for {pod} in the last {time_range}"
+        - name: "Error Logs"
+          query: "Find error logs from {service} in the last {time_range}"
+        - name: "Dashboard View"
+          query: "Show me the {dashboard_name} dashboard"
+        - name: "Active Alerts"
+          query: "List active alerts for {namespace}"
+    
+    # Export capabilities
+    export:
+      enabled: true
+      formats:
+        - json
+        - csv
+        - markdown
+
+# WebSocket configuration
+websocket:
+  enabled: true
+  path: /ws
+  # Ping interval to keep connection alive
+  pingInterval: 30000  # 30 seconds
+  # Connection timeout
+  timeout: 300000  # 5 minutes
+  # Max message size
+  maxMessageSize: 1048576  # 1MB
+
+# Query execution settings
+queryExecution:
+  # Timeout for query execution
+  timeout: 30000  # 30 seconds
+  # Max concurrent queries per user
+  maxConcurrent: 5
+  # Query result caching
+  cache:
+    enabled: true
+    ttl: 300  # 5 minutes
+  # Rate limiting
+  rateLimit:
+    enabled: true
+    maxQueriesPerMinute: 60
+
+# UI customization
+ui:
+  # Theme
+  theme:
+    primary: "#007bff"
+    secondary: "#6c757d"
+    success: "#28a745"
+    danger: "#dc3545"
+    warning: "#ffc107"
+    info: "#17a2b8"
+  
+  # Branding
+  branding:
+    title: "Observability Chat"
+    subtitle: "Query metrics, logs, and dashboards"
+    logo: "/logo.png"
+  
+  # Layout
+  layout:
+    sidebar: true
+    queryHistory: true
+    suggestions: true
+
+# Made with Bob

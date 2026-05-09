@@ -1,0 +1,527 @@
+# Pod Recovery Agent Configuration for AI-Powered Observability Platform
+# Namespace: nilabja-haldar-dev
+# Purpose: Monitor pod health, diagnose issues, execute recovery actions with human approval
+
+# Global settings
+global:
+  namespace: nilabja-haldar-dev
+
+# Deployment configuration
+replicaCount: 2
+
+image:
+  repository: pod-recovery-agent
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8082
+  targetPort: 8082
+
+# Ingress/Route configuration
+route:
+  enabled: true
+  host: pod-recovery-agent-nilabja-haldar-dev.apps.rosa.example.com
+  path: /
+  tls:
+    enabled: true
+    termination: edge
+
+# Environment variables
+env:
+  # Application settings
+  - name: APP_NAME
+    value: "pod-recovery-agent"
+  - name: APP_VERSION
+    value: "1.0.0"
+  - name: LOG_LEVEL
+    value: "INFO"
+  - name: LOG_FORMAT
+    value: "json"
+  
+  # LLM configuration (OpenAI)
+  - name: LLM_PROVIDER
+    value: "openai"
+  - name: OPENAI_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: llm-credentials
+        key: openai-api-key
+  - name: OPENAI_MODEL
+    value: "gpt-4"
+  - name: OPENAI_TEMPERATURE
+    value: "0.5"
+  - name: OPENAI_MAX_TOKENS
+    value: "1500"
+  
+  # Alternative: Groq
+  - name: GROQ_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: llm-credentials
+        key: groq-api-key
+        optional: true
+  - name: GROQ_MODEL
+    value: "llama-3.1-70b-versatile"
+  
+  # Vector store configuration (Chroma)
+  - name: VECTOR_STORE_TYPE
+    value: "chroma"
+  - name: CHROMA_HOST
+    value: "chroma.nilabja-haldar-dev.svc.cluster.local"
+  - name: CHROMA_PORT
+    value: "8000"
+  - name: CHROMA_COLLECTION
+    value: "pod-recovery-memory"
+  
+  # Kubernetes API configuration
+  - name: KUBERNETES_NAMESPACE
+    value: "nilabja-haldar-dev"
+  - name: KUBERNETES_IN_CLUSTER
+    value: "true"
+  
+  # Prometheus configuration (for diagnostics)
+  - name: PROMETHEUS_URL
+    value: "http://prometheus.nilabja-haldar-dev.svc.cluster.local:9090"
+  - name: PROMETHEUS_TIMEOUT
+    value: "30"
+  
+  # Loki configuration (for log analysis)
+  - name: LOKI_URL
+    value: "http://loki.nilabja-haldar-dev.svc.cluster.local:3100"
+  - name: LOKI_TIMEOUT
+    value: "30"
+  
+  # Slack configuration (for approval workflow)
+  - name: SLACK_ENABLED
+    value: "true"
+  - name: SLACK_WEBHOOK_URL
+    valueFrom:
+      secretKeyRef:
+        name: slack-credentials
+        key: webhook-url
+  - name: SLACK_BOT_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: slack-credentials
+        key: bot-token
+  - name: SLACK_CHANNEL
+    value: "#pod-recovery-alerts"
+  - name: SLACK_TIMEOUT
+    value: "10"
+  
+  # Confluence configuration (for incident documentation)
+  - name: CONFLUENCE_ENABLED
+    value: "true"
+  - name: CONFLUENCE_URL
+    value: "https://confluence.example.com"
+  - name: CONFLUENCE_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: confluence-credentials
+        key: username
+  - name: CONFLUENCE_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: confluence-credentials
+        key: api-token
+  - name: CONFLUENCE_SPACE
+    value: "OBSERVABILITY"
+  
+  # Execution mode (CRITICAL)
+  - name: EXECUTION_MODE
+    value: "PLAN_ONLY"  # PLAN_ONLY or EXECUTE (requires approval)
+  - name: REQUIRE_APPROVAL
+    value: "true"  # ALWAYS require human approval
+  - name: APPROVAL_TIMEOUT
+    value: "300"  # 5 minutes (timeout = DENY)
+  
+  # Recovery actions configuration
+  - name: ENABLE_POD_RESTART
+    value: "true"
+  - name: ENABLE_POD_DELETE
+    value: "true"
+  - name: ENABLE_DEPLOYMENT_SCALE
+    value: "true"
+  - name: ENABLE_STATEFULSET_SCALE
+    value: "false"  # Disabled by default (risky)
+  - name: ENABLE_ROLLBACK
+    value: "false"  # Disabled by default (requires careful consideration)
+  
+  # Monitoring configuration
+  - name: MONITORING_INTERVAL
+    value: "60"  # Check pod health every 60 seconds
+  - name: ISSUE_DETECTION_ENABLED
+    value: "true"
+  - name: AUTO_RECOVERY_ENABLED
+    value: "false"  # Disabled by default (requires approval)
+  
+  # Diagnostics configuration
+  - name: DIAGNOSTICS_ENABLED
+    value: "true"
+  - name: DIAGNOSTICS_LOG_LINES
+    value: "100"  # Fetch last 100 log lines for analysis
+  - name: DIAGNOSTICS_METRICS_WINDOW
+    value: "5m"  # Analyze metrics from last 5 minutes
+  
+  # Metrics configuration
+  - name: METRICS_ENABLED
+    value: "true"
+  - name: METRICS_PORT
+    value: "8082"
+  - name: METRICS_PATH
+    value: "/metrics"
+
+# Resource limits
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8082
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8082
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# ServiceMonitor for Prometheus metrics scraping
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    prometheus: kube-prometheus
+
+# ServiceAccount for agent operations
+serviceAccount:
+  create: true
+  name: pod-recovery-agent
+  annotations: {}
+
+# RBAC configuration (namespace-scoped only)
+rbac:
+  create: true
+  clusterRole: false
+  
+  rules:
+    # Read permissions
+    - apiGroups:
+        - ""
+      resources:
+        - pods
+        - pods/log
+        - pods/status
+        - events
+        - services
+        - configmaps
+      verbs:
+        - get
+        - list
+        - watch
+    
+    # Write permissions (for recovery actions)
+    - apiGroups:
+        - ""
+      resources:
+        - pods
+      verbs:
+        - delete  # For pod restart
+    
+    - apiGroups:
+        - apps
+      resources:
+        - deployments
+        - deployments/scale
+        - statefulsets
+        - statefulsets/scale
+        - replicasets
+        - daemonsets
+      verbs:
+        - get
+        - list
+        - watch
+        - patch  # For scaling
+        - update  # For scaling
+    
+    - apiGroups:
+        - monitoring.coreos.com
+      resources:
+        - servicemonitors
+      verbs:
+        - get
+        - list
+        - watch
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Pod security context
+podSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# Volume mounts
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+  - name: cache
+    mountPath: /app/.cache
+
+volumes:
+  - name: tmp
+    emptyDir: {}
+  - name: cache
+    emptyDir: {}
+
+# Node selector (optional)
+nodeSelector: {}
+
+# Tolerations (optional)
+tolerations: []
+
+# Affinity rules for high availability
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - pod-recovery-agent
+          topologyKey: kubernetes.io/hostname
+
+# Additional labels
+labels:
+  app: pod-recovery-agent
+  component: ai-agents
+  tier: recovery
+  managed-by: helm
+
+# Additional annotations
+annotations:
+  description: "Pod Recovery Agent for automated pod health monitoring and recovery"
+  namespace: "nilabja-haldar-dev"
+
+# Pod health issue detection rules
+issueDetectionRules:
+  # CrashLoopBackOff
+  - name: "crash_loop_backoff"
+    description: "Pod is in CrashLoopBackOff state"
+    condition: "status.containerStatuses[*].state.waiting.reason == 'CrashLoopBackOff'"
+    severity: "high"
+    auto_diagnose: true
+    suggested_actions:
+      - "Analyze pod logs for errors"
+      - "Check container image and configuration"
+      - "Verify resource limits"
+      - "Restart pod if issue is transient"
+  
+  # OOMKilled
+  - name: "oom_killed"
+    description: "Pod was killed due to out of memory"
+    condition: "status.containerStatuses[*].lastState.terminated.reason == 'OOMKilled'"
+    severity: "critical"
+    auto_diagnose: true
+    suggested_actions:
+      - "Analyze memory usage metrics"
+      - "Increase memory limits"
+      - "Check for memory leaks in application"
+      - "Restart pod after increasing limits"
+  
+  # ImagePullBackOff
+  - name: "image_pull_backoff"
+    description: "Unable to pull container image"
+    condition: "status.containerStatuses[*].state.waiting.reason == 'ImagePullBackOff'"
+    severity: "high"
+    auto_diagnose: true
+    suggested_actions:
+      - "Verify image name and tag"
+      - "Check image registry credentials"
+      - "Verify network connectivity to registry"
+  
+  # Pod Not Ready
+  - name: "pod_not_ready"
+    description: "Pod is not ready for extended period"
+    condition: "status.conditions[?(@.type=='Ready')].status == 'False'"
+    duration: "5m"
+    severity: "medium"
+    auto_diagnose: true
+    suggested_actions:
+      - "Check readiness probe configuration"
+      - "Analyze pod logs"
+      - "Verify service dependencies"
+      - "Restart pod if issue persists"
+  
+  # High Restart Count
+  - name: "high_restart_count"
+    description: "Pod has restarted multiple times"
+    condition: "status.containerStatuses[*].restartCount > 5"
+    severity: "medium"
+    auto_diagnose: true
+    suggested_actions:
+      - "Analyze restart pattern"
+      - "Check for configuration issues"
+      - "Review resource limits"
+      - "Investigate application stability"
+  
+  # Pending State
+  - name: "pod_pending"
+    description: "Pod stuck in Pending state"
+    condition: "status.phase == 'Pending'"
+    duration: "2m"
+    severity: "medium"
+    auto_diagnose: true
+    suggested_actions:
+      - "Check node resources (CPU, memory)"
+      - "Verify PVC availability"
+      - "Check pod scheduling constraints"
+      - "Review node affinity rules"
+
+# Recovery action templates
+recoveryActions:
+  # Restart pod (delete and let controller recreate)
+  - name: "restart_pod"
+    description: "Delete pod to trigger restart"
+    requires_approval: true
+    approval_timeout: 300  # 5 minutes
+    steps:
+      - "Verify pod is managed by controller (Deployment, StatefulSet, etc.)"
+      - "Send Slack approval request"
+      - "Wait for human approval"
+      - "Delete pod"
+      - "Monitor new pod creation"
+      - "Verify new pod is healthy"
+      - "Document action in Confluence"
+  
+  # Scale deployment up
+  - name: "scale_deployment_up"
+    description: "Increase deployment replicas"
+    requires_approval: true
+    approval_timeout: 300
+    steps:
+      - "Get current replica count"
+      - "Calculate new replica count (current + 1)"
+      - "Send Slack approval request"
+      - "Wait for human approval"
+      - "Patch deployment with new replica count"
+      - "Monitor new pod creation"
+      - "Verify all pods are healthy"
+      - "Document action in Confluence"
+  
+  # Scale deployment down
+  - name: "scale_deployment_down"
+    description: "Decrease deployment replicas"
+    requires_approval: true
+    approval_timeout: 300
+    steps:
+      - "Get current replica count"
+      - "Calculate new replica count (current - 1, min 1)"
+      - "Send Slack approval request"
+      - "Wait for human approval"
+      - "Patch deployment with new replica count"
+      - "Monitor pod termination"
+      - "Verify remaining pods are healthy"
+      - "Document action in Confluence"
+
+# Diagnostics configuration
+diagnostics:
+  # Log analysis
+  logs:
+    enabled: true
+    lines: 100
+    patterns:
+      - "error"
+      - "exception"
+      - "fatal"
+      - "panic"
+      - "oom"
+      - "killed"
+  
+  # Metrics analysis
+  metrics:
+    enabled: true
+    window: "5m"
+    queries:
+      - name: "cpu_usage"
+        promql: 'rate(container_cpu_usage_seconds_total{namespace="nilabja-haldar-dev",pod="{{.PodName}}"}[5m]) * 100'
+      - name: "memory_usage"
+        promql: 'container_memory_usage_bytes{namespace="nilabja-haldar-dev",pod="{{.PodName}}"} / 1024 / 1024'
+      - name: "restart_count"
+        promql: 'kube_pod_container_status_restarts_total{namespace="nilabja-haldar-dev",pod="{{.PodName}}"}'
+  
+  # Events analysis
+  events:
+    enabled: true
+    types:
+      - "Warning"
+      - "Error"
+    max_age: "10m"
+
+# Metrics to track
+metrics:
+  custom:
+    - name: agent_pod_health_checks_total
+      type: counter
+      description: "Total pod health checks performed"
+      labels: ["pod", "status"]
+    
+    - name: agent_issues_detected_total
+      type: counter
+      description: "Total pod issues detected"
+      labels: ["issue_type", "severity"]
+    
+    - name: agent_recovery_actions_total
+      type: counter
+      description: "Total recovery actions executed"
+      labels: ["action_type", "status"]
+    
+    - name: agent_approval_requests_total
+      type: counter
+      description: "Total approval requests sent"
+      labels: ["action_type", "decision"]
+    
+    - name: agent_approval_duration_seconds
+      type: histogram
+      description: "Time to receive approval decision"
+      buckets: [10, 30, 60, 120, 300]
+    
+    - name: agent_diagnostics_duration_seconds
+      type: histogram
+      description: "Time to complete diagnostics"
+      labels: ["diagnostic_type"]
+      buckets: [1, 5, 10, 30, 60]
+    
+    - name: agent_recovery_success_rate
+      type: gauge
+      description: "Success rate of recovery actions"
+
+# Made with Bob

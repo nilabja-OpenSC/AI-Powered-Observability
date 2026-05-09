@@ -1,0 +1,17 @@
+apiVersion: v2
+name: velero
+description: Velero for namespace-scoped backup and restore operations
+type: application
+version: 1.0.0
+appVersion: "1.13.0"
+keywords:
+  - velero
+  - backup
+  - restore
+  - disaster-recovery
+  - postgresql
+maintainers:
+  - name: AI-Powered Observability Team
+    email: observability@example.com
+
+# Made with Bob

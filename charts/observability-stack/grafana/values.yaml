@@ -1,0 +1,264 @@
+# Grafana Helm Chart Values
+# Namespace: nilabja-haldar-dev
+
+replicaCount: 1
+
+image:
+  repository: grafana/grafana
+  tag: "10.0.0"
+  pullPolicy: IfNotPresent
+
+# Grafana configuration
+grafana:
+  adminUser: admin
+  adminPassword: admin123  # Change in production
+  
+# Service configuration
+service:
+  type: ClusterIP
+  port: 3000
+
+# Dashboard refresh interval (10s as per requirements)
+dashboardRefreshInterval: 10s
+
+# Data sources configuration
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      timeInterval: 15s
+      queryTimeout: 60s
+    editable: false
+
+  - name: Thanos
+    type: prometheus
+    access: proxy
+    url: http://thanos-query:9090
+    isDefault: false
+    jsonData:
+      timeInterval: 15s
+      queryTimeout: 60s
+    editable: false
+
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      maxLines: 1000
+    editable: false
+
+# Dashboard providers
+dashboardProviders:
+  - name: 'default'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/default
+
+# Pre-configured dashboards
+dashboards:
+  default:
+    app-overview:
+      json: |
+        {
+          "dashboard": {
+            "title": "Application Overview",
+            "tags": ["application", "overview"],
+            "timezone": "browser",
+            "refresh": "10s",
+            "panels": [
+              {
+                "id": 1,
+                "title": "Request Rate",
+                "type": "graph",
+                "targets": [
+                  {
+                    "expr": "sum(rate(http_requests_total{namespace=\"nilabja-haldar-dev\"}[5m])) by (app)",
+                    "legendFormat": "{{app}}"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "title": "Error Rate",
+                "type": "graph",
+                "targets": [
+                  {
+                    "expr": "sum(rate(http_requests_total{namespace=\"nilabja-haldar-dev\",status=~\"5..\"}[5m])) by (app)",
+                    "legendFormat": "{{app}}"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "title": "P95 Latency",
+                "type": "graph",
+                "targets": [
+                  {
+                    "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"nilabja-haldar-dev\"}[5m])) by (le, app))",
+                    "legendFormat": "{{app}}"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+
+    pod-health:
+      json: |
+        {
+          "dashboard": {
+            "title": "Pod Health",
+            "tags": ["kubernetes", "pods"],
+            "timezone": "browser",
+            "refresh": "10s",
+            "panels": [
+              {
+                "id": 1,
+                "title": "Pod Status",
+                "type": "stat",
+                "targets": [
+                  {
+                    "expr": "count(kube_pod_status_phase{namespace=\"nilabja-haldar-dev\",phase=\"Running\"})",
+                    "legendFormat": "Running"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "title": "Pod Restarts",
+                "type": "graph",
+                "targets": [
+                  {
+                    "expr": "sum(rate(kube_pod_container_status_restarts_total{namespace=\"nilabja-haldar-dev\"}[5m])) by (pod)",
+                    "legendFormat": "{{pod}}"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "title": "CPU Usage",
+                "type": "graph",
+                "targets": [
+                  {
+                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"nilabja-haldar-dev\"}[5m])) by (pod)",
+                    "legendFormat": "{{pod}}"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "title": "Memory Usage",
+                "type": "graph",
+                "targets": [
+                  {
+                    "expr": "sum(container_memory_working_set_bytes{namespace=\"nilabja-haldar-dev\"}) by (pod)",
+                    "legendFormat": "{{pod}}"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+
+    database-health:
+      json: |
+        {
+          "dashboard": {
+            "title": "Database Health",
+            "tags": ["database", "postgresql"],
+            "timezone": "browser",
+            "refresh": "10s",
+            "panels": [
+              {
+                "id": 1,
+                "title": "Database Connections",
+                "type": "graph",
+                "targets": [
+                  {
+                    "expr": "pg_stat_activity_count{namespace=\"nilabja-haldar-dev\"}",
+                    "legendFormat": "Connections"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "title": "Query Duration",
+                "type": "graph",
+                "targets": [
+                  {
+                    "expr": "rate(pg_stat_database_tup_fetched{namespace=\"nilabja-haldar-dev\"}[5m])",
+                    "legendFormat": "Rows Fetched"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "title": "Database Size",
+                "type": "stat",
+                "targets": [
+                  {
+                    "expr": "pg_database_size_bytes{namespace=\"nilabja-haldar-dev\"}",
+                    "legendFormat": "Size"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+
+# Plugins to install
+plugins:
+  - grafana-piechart-panel
+  - grafana-clock-panel
+
+# Resource limits (not set per requirements)
+resources: {}
+
+# Security context
+securityContext:
+  runAsUser: 472
+  runAsGroup: 472
+  fsGroup: 472
+  runAsNonRoot: true
+
+# Persistence
+persistence:
+  enabled: false  # Dashboards are provisioned via ConfigMaps
+
+# Environment variables
+env:
+  GF_SECURITY_ADMIN_USER: admin
+  GF_SECURITY_ADMIN_PASSWORD: admin123
+  GF_USERS_ALLOW_SIGN_UP: "false"
+  GF_SERVER_ROOT_URL: "http://grafana:3000"
+  GF_AUTH_ANONYMOUS_ENABLED: "false"
+
+# Liveness and readiness probes
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 30
+  failureThreshold: 10
+
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 30
+  failureThreshold: 10
+
+# Made with Bob

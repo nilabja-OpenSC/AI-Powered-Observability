@@ -1,0 +1,17 @@
+apiVersion: v2
+name: alertmanager
+description: Alertmanager for handling alerts from Prometheus with Slack integration
+type: application
+version: 1.0.0
+appVersion: "0.27.0"
+keywords:
+  - alertmanager
+  - prometheus
+  - alerts
+  - notifications
+  - slack
+maintainers:
+  - name: AI-Powered Observability Team
+    email: observability@example.com
+
+# Made with Bob

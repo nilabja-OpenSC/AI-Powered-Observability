@@ -1,0 +1,19 @@
+apiVersion: v2
+name: pod-recovery-agent
+description: Pod Recovery Agent for automated pod health monitoring and recovery
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - ai
+  - agent
+  - pod-recovery
+  - kubernetes
+  - automation
+  - self-healing
+maintainers:
+  - name: AI-Powered Observability Team
+    email: observability@example.com
+dependencies: []
+
+# Made with Bob

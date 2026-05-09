@@ -1,0 +1,135 @@
+# Loki Helm Chart Values
+# Namespace: nilabja-haldar-dev
+
+replicaCount: 1
+
+image:
+  repository: grafana/loki
+  tag: "2.8.0"
+  pullPolicy: IfNotPresent
+
+# Loki configuration
+loki:
+  auth_enabled: false
+  
+  server:
+    http_listen_port: 3100
+    grpc_listen_port: 9096
+  
+  # Ingester configuration
+  ingester:
+    lifecycler:
+      ring:
+        kvstore:
+          store: inmemory
+        replication_factor: 1
+    chunk_idle_period: 5m
+    chunk_retain_period: 30s
+    max_transfer_retries: 0
+  
+  # Schema configuration
+  schema_config:
+    configs:
+      - from: 2023-01-01
+        store: boltdb-shipper
+        object_store: filesystem
+        schema: v11
+        index:
+          prefix: index_
+          period: 24h
+  
+  # Storage configuration
+  storage_config:
+    boltdb_shipper:
+      active_index_directory: /loki/index
+      cache_location: /loki/index_cache
+      shared_store: filesystem
+    filesystem:
+      directory: /loki/chunks
+  
+  # Limits configuration
+  limits_config:
+    enforce_metric_name: false
+    reject_old_samples: true
+    reject_old_samples_max_age: 168h  # 7 days
+    ingestion_rate_mb: 10
+    ingestion_burst_size_mb: 20
+    max_query_length: 721h  # 30 days
+    max_query_parallelism: 32
+    max_streams_per_user: 10000
+    max_global_streams_per_user: 50000
+  
+  # Compactor configuration
+  compactor:
+    working_directory: /loki/compactor
+    shared_store: filesystem
+    compaction_interval: 10m
+  
+  # Query range configuration
+  query_range:
+    align_queries_with_step: true
+    max_retries: 5
+    cache_results: true
+    results_cache:
+      cache:
+        enable_fifocache: true
+        fifocache:
+          max_size_items: 1024
+          validity: 24h
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 3100
+  grpcPort: 9096
+
+# Persistence configuration
+persistence:
+  enabled: true
+  storageClass: efs-sc
+  accessMode: ReadWriteOnce
+  size: 20Gi
+  mountPath: /loki
+
+# Resource limits (not set per requirements)
+resources: {}
+  # limits:
+  #   cpu: 1000m
+  #   memory: 2Gi
+  # requests:
+  #   cpu: 500m
+  #   memory: 1Gi
+
+# Security context
+securityContext:
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  runAsNonRoot: true
+
+# Liveness and readiness probes
+livenessProbe:
+  httpGet:
+    path: /ready
+    port: 3100
+  initialDelaySeconds: 45
+  periodSeconds: 10
+  timeoutSeconds: 1
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 3100
+  initialDelaySeconds: 45
+  periodSeconds: 10
+  timeoutSeconds: 1
+  failureThreshold: 3
+
+# ServiceMonitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+
+# Made with Bob

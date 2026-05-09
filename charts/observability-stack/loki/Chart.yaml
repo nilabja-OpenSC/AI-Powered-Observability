@@ -1,0 +1,15 @@
+apiVersion: v2
+name: loki
+description: Loki log aggregation system for centralized logging
+type: application
+version: 1.0.0
+appVersion: "2.8.0"
+keywords:
+  - loki
+  - logging
+  - logs
+  - observability
+maintainers:
+  - name: AI-Powered Observability Team
+
+# Made with Bob

@@ -1,0 +1,232 @@
+# Frontend UI Configuration for AI-Powered Observability Platform
+# Namespace: nilabja-haldar-dev
+# Purpose: Next.js frontend for e-commerce demo
+
+# Global settings
+global:
+  namespace: nilabja-haldar-dev
+
+# Deployment configuration
+replicaCount: 2
+
+image:
+  repository: frontend-ui
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 3000
+  targetPort: 3000
+
+# Ingress/Route configuration
+route:
+  enabled: true
+  host: shop-nilabja-haldar-dev.apps.rosa.example.com
+  path: /
+  tls:
+    enabled: true
+    termination: edge
+
+# Environment variables
+env:
+  # Application settings
+  - name: APP_NAME
+    value: "frontend-ui"
+  - name: APP_VERSION
+    value: "1.0.0"
+  - name: NODE_ENV
+    value: "production"
+  
+  # Backend API connection
+  - name: NEXT_PUBLIC_API_URL
+    value: "https://backend-api-nilabja-haldar-dev.apps.rosa.example.com/api/v1"
+  - name: API_TIMEOUT_MS
+    value: "5000"
+  
+  # Feature flags
+  - name: NEXT_PUBLIC_ENABLE_CART
+    value: "true"
+  - name: NEXT_PUBLIC_ENABLE_CHECKOUT
+    value: "true"
+  - name: NEXT_PUBLIC_ENABLE_USER_PROFILE
+    value: "true"
+  
+  # UI settings
+  - name: NEXT_PUBLIC_ITEMS_PER_PAGE
+    value: "12"
+  - name: NEXT_PUBLIC_CURRENCY
+    value: "USD"
+  - name: NEXT_PUBLIC_CURRENCY_SYMBOL
+    value: "$"
+
+# Resource limits
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /
+    port: 3000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: 3000
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Pod security context
+podSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# Volume mounts for Next.js cache
+volumeMounts:
+  - name: nextjs-cache
+    mountPath: /app/.next/cache
+  - name: tmp
+    mountPath: /tmp
+
+volumes:
+  - name: nextjs-cache
+    emptyDir: {}
+  - name: tmp
+    emptyDir: {}
+
+# Node selector (optional)
+nodeSelector: {}
+
+# Tolerations (optional)
+tolerations: []
+
+# Affinity rules for high availability
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - frontend-ui
+          topologyKey: kubernetes.io/hostname
+
+# Additional labels
+labels:
+  app: frontend-ui
+  component: ecommerce
+  tier: frontend
+  managed-by: helm
+
+# Additional annotations
+annotations:
+  description: "Next.js frontend for e-commerce demo"
+  namespace: "nilabja-haldar-dev"
+
+# UI pages configuration
+pages:
+  # Home page
+  home:
+    enabled: true
+    path: /
+    features:
+      - featured-products
+      - categories
+      - promotions
+  
+  # Product listing
+  products:
+    enabled: true
+    path: /products
+    features:
+      - search
+      - filters
+      - sorting
+      - pagination
+  
+  # Product detail
+  productDetail:
+    enabled: true
+    path: /products/[id]
+    features:
+      - images
+      - description
+      - reviews
+      - add-to-cart
+  
+  # Shopping cart
+  cart:
+    enabled: true
+    path: /cart
+    features:
+      - item-list
+      - quantity-update
+      - remove-items
+      - checkout-button
+  
+  # Checkout
+  checkout:
+    enabled: true
+    path: /checkout
+    features:
+      - shipping-info
+      - payment-info
+      - order-summary
+  
+  # User profile
+  profile:
+    enabled: true
+    path: /profile
+    features:
+      - order-history
+      - account-settings
+  
+  # Order confirmation
+  orderConfirmation:
+    enabled: true
+    path: /orders/[id]
+    features:
+      - order-details
+      - tracking-info
+
+# Made with Bob

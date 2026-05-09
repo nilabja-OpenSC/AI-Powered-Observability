@@ -1,0 +1,381 @@
+# Velero Configuration for AI-Powered Observability Platform
+# Namespace: nilabja-haldar-dev
+# Purpose: Namespace-scoped backup and restore operations
+
+# Global settings
+global:
+  namespace: nilabja-haldar-dev
+  storageClass: efs-sc  # EFS CSI storage class
+
+# Velero server configuration
+velero:
+  image:
+    repository: velero/velero
+    tag: v1.13.0
+    pullPolicy: IfNotPresent
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  
+  # Namespace-scoped configuration
+  # CRITICAL: Velero operates ONLY in nilabja-haldar-dev namespace
+  configuration:
+    # Namespace to backup (only our namespace)
+    namespace: nilabja-haldar-dev
+    
+    # Backup storage location
+    backupStorageLocation:
+      - name: default
+        provider: aws
+        bucket: velero-backups-nilabja-haldar-dev
+        config:
+          region: us-east-1
+          # Use EFS CSI for local storage (demo-friendly)
+          # In production, use S3 or compatible object storage
+          s3ForcePathStyle: "true"
+          s3Url: http://minio.nilabja-haldar-dev.svc.cluster.local:9000
+    
+    # Volume snapshot location (for PVC backups)
+    volumeSnapshotLocation:
+      - name: default
+        provider: aws
+        config:
+          region: us-east-1
+    
+    # Default backup TTL (30 days)
+    defaultBackupTTL: 720h
+    
+    # Features
+    features: restic,enableCSI
+    
+    # Restore resource priorities
+    restoreResourcePriorities: >-
+      namespaces,
+      storageclasses,
+      persistentvolumes,
+      persistentvolumeclaims,
+      secrets,
+      configmaps,
+      serviceaccounts,
+      services,
+      deployments,
+      statefulsets,
+      jobs,
+      pods
+  
+  # Init containers for plugins
+  initContainers:
+    - name: velero-plugin-for-aws
+      image: velero/velero-plugin-for-aws:v1.9.0
+      volumeMounts:
+        - mountPath: /target
+          name: plugins
+
+# Restic for PVC backups
+restic:
+  enabled: true
+  
+  image:
+    repository: velero/velero
+    tag: v1.13.0
+    pullPolicy: IfNotPresent
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  
+  # Security context
+  securityContext:
+    runAsUser: 0
+    privileged: false
+    capabilities:
+      add:
+        - DAC_READ_SEARCH
+
+# Backup schedules
+schedules:
+  # Daily full backup at 2 AM UTC
+  daily-backup:
+    disabled: false
+    schedule: "0 2 * * *"
+    template:
+      ttl: 720h  # 30 days
+      includedNamespaces:
+        - nilabja-haldar-dev
+      includedResources:
+        - "*"
+      excludedResources:
+        - events
+        - events.events.k8s.io
+      snapshotVolumes: true
+      defaultVolumesToRestic: true
+      storageLocation: default
+      volumeSnapshotLocations:
+        - default
+  
+  # Hourly PostgreSQL backup
+  hourly-database-backup:
+    disabled: false
+    schedule: "0 * * * *"
+    template:
+      ttl: 168h  # 7 days
+      includedNamespaces:
+        - nilabja-haldar-dev
+      labelSelector:
+        matchLabels:
+          app: postgresql
+      snapshotVolumes: true
+      defaultVolumesToRestic: true
+      storageLocation: default
+  
+  # Weekly full backup (Sunday 3 AM UTC)
+  weekly-backup:
+    disabled: false
+    schedule: "0 3 * * 0"
+    template:
+      ttl: 2160h  # 90 days
+      includedNamespaces:
+        - nilabja-haldar-dev
+      includedResources:
+        - "*"
+      snapshotVolumes: true
+      defaultVolumesToRestic: true
+      storageLocation: default
+
+# MinIO for local object storage (demo-friendly)
+# In production, use AWS S3 or compatible object storage
+minio:
+  enabled: true
+  
+  image:
+    repository: minio/minio
+    tag: RELEASE.2024-01-01T00-00-00Z
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 9000
+    consolePort: 9001
+  
+  # Persistent storage
+  persistence:
+    enabled: true
+    storageClass: efs-sc
+    accessMode: ReadWriteOnce
+    size: 50Gi
+  
+  # MinIO credentials (to be created as secret)
+  auth:
+    rootUser: admin
+    rootPassword: ""  # Set via secret
+  
+  # Default buckets
+  defaultBuckets: "velero-backups-nilabja-haldar-dev"
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# ServiceAccount for Velero
+serviceAccount:
+  create: true
+  name: velero
+  annotations: {}
+
+# RBAC configuration (namespace-scoped only)
+rbac:
+  create: true
+  # Namespace-scoped role (NOT cluster-wide)
+  clusterRole: false
+  
+  # Permissions required for backup/restore
+  rules:
+    - apiGroups:
+        - ""
+      resources:
+        - pods
+        - pods/log
+        - persistentvolumeclaims
+        - persistentvolumes
+        - configmaps
+        - secrets
+        - services
+        - serviceaccounts
+      verbs:
+        - get
+        - list
+        - watch
+        - create
+        - update
+        - patch
+        - delete
+    
+    - apiGroups:
+        - apps
+      resources:
+        - deployments
+        - statefulsets
+        - daemonsets
+        - replicasets
+      verbs:
+        - get
+        - list
+        - watch
+        - create
+        - update
+        - patch
+        - delete
+    
+    - apiGroups:
+        - batch
+      resources:
+        - jobs
+        - cronjobs
+      verbs:
+        - get
+        - list
+        - watch
+        - create
+        - update
+        - patch
+        - delete
+    
+    - apiGroups:
+        - velero.io
+      resources:
+        - backups
+        - restores
+        - schedules
+        - backupstoragelocations
+        - volumesnapshotlocations
+      verbs:
+        - "*"
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Pod security context
+podSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false  # Velero needs write access
+
+# Node selector (optional)
+nodeSelector: {}
+
+# Tolerations (optional)
+tolerations: []
+
+# Affinity rules (optional)
+affinity: {}
+
+# Additional labels
+labels:
+  app: velero
+  component: backup-restore
+  managed-by: helm
+
+# Additional annotations
+annotations:
+  description: "Velero for namespace-scoped backup and restore"
+  namespace: "nilabja-haldar-dev"
+
+# Metrics configuration
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+    labels:
+      prometheus: kube-prometheus
+
+# Backup hooks (pre/post backup commands)
+# Example: PostgreSQL backup hook
+backupHooks:
+  postgresql:
+    enabled: true
+    # Pre-backup: Create consistent snapshot
+    pre:
+      - exec:
+          container: postgresql
+          command:
+            - /bin/bash
+            - -c
+            - |
+              echo "Starting PostgreSQL backup hook"
+              psql -U postgres -c "SELECT pg_start_backup('velero-backup', true);"
+          onError: Fail
+          timeout: 5m
+    
+    # Post-backup: Release snapshot
+    post:
+      - exec:
+          container: postgresql
+          command:
+            - /bin/bash
+            - -c
+            - |
+              psql -U postgres -c "SELECT pg_stop_backup();"
+              echo "PostgreSQL backup hook completed"
+          onError: Continue
+          timeout: 5m
+
+# Restore hooks (post-restore commands)
+restoreHooks:
+  postgresql:
+    enabled: true
+    # Post-restore: Verify database integrity
+    post:
+      - exec:
+          container: postgresql
+          command:
+            - /bin/bash
+            - -c
+            - |
+              echo "Verifying PostgreSQL restore"
+              psql -U postgres -c "SELECT version();"
+              psql -U postgres -d ecommerce -c "SELECT COUNT(*) FROM users;"
+          onError: Continue
+          timeout: 5m
+
+# Velero CLI configuration
+cli:
+  # Image for Velero CLI (used by agents)
+  image:
+    repository: velero/velero
+    tag: v1.13.0
+  
+  # Resource limits for CLI jobs
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+# Made with Bob

@@ -1,0 +1,256 @@
+# Prometheus Helm Chart Values
+# Namespace: nilabja-haldar-dev
+
+replicaCount: 1
+
+image:
+  repository: prom/prometheus
+  tag: v2.45.0
+  pullPolicy: IfNotPresent
+
+# Prometheus configuration
+prometheus:
+  retention: 10d  # 10 days retention as per requirements
+  scrapeInterval: 15s
+  evaluationInterval: 15s
+  externalLabels:
+    cluster: rosa
+    namespace: nilabja-haldar-dev
+
+# Storage configuration
+persistence:
+  enabled: true
+  storageClass: efs-sc
+  accessMode: ReadWriteOnce
+  size: 50Gi
+  mountPath: /prometheus
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 9090
+
+# Thanos sidecar configuration
+thanos:
+  enabled: true
+  image:
+    repository: quay.io/thanos/thanos
+    tag: v0.31.0
+  objectStorageConfig:
+    # Object storage configuration for long-term metrics
+    # Will be configured via secret
+    secretName: thanos-objstore-config
+
+# Resource limits (not set per requirements)
+resources: {}
+  # limits:
+  #   cpu: 2000m
+  #   memory: 4Gi
+  # requests:
+  #   cpu: 1000m
+  #   memory: 2Gi
+
+# Security context
+securityContext:
+  runAsUser: 65534
+  runAsGroup: 65534
+  fsGroup: 65534
+  runAsNonRoot: true
+
+# Service discovery configuration
+serviceMonitorSelector:
+  matchLabels:
+    prometheus: kube-prometheus
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - namespace: nilabja-haldar-dev
+      name: alertmanager
+      port: 9093
+
+# Rule files
+ruleFiles:
+  - /etc/prometheus/rules/*.yaml
+
+# Prometheus rules
+rules:
+  # Application rules
+  - name: application-alerts
+    interval: 30s
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{namespace="nilabja-haldar-dev",status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{namespace="nilabja-haldar-dev"}[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          namespace: nilabja-haldar-dev
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.app }}"
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{namespace="nilabja-haldar-dev"}[5m])) by (le, app)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          namespace: nilabja-haldar-dev
+        annotations:
+          summary: "High latency detected"
+          description: "P95 latency is {{ $value }}s for {{ $labels.app }}"
+
+  # Pod health rules
+  - name: pod-health-alerts
+    interval: 30s
+    rules:
+      - alert: PodCrashLooping
+        expr: |
+          rate(kube_pod_container_status_restarts_total{namespace="nilabja-haldar-dev"}[15m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          namespace: nilabja-haldar-dev
+        annotations:
+          summary: "Pod is crash looping"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is crash looping"
+
+      - alert: PodNotReady
+        expr: |
+          sum by (namespace, pod) (
+            kube_pod_status_phase{namespace="nilabja-haldar-dev", phase!~"Running|Succeeded"}
+          ) > 0
+        for: 10m
+        labels:
+          severity: warning
+          namespace: nilabja-haldar-dev
+        annotations:
+          summary: "Pod not ready"
+          description: "Pod {{ $labels.pod }} has been in {{ $labels.phase }} state for more than 10 minutes"
+
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            sum(container_memory_working_set_bytes{namespace="nilabja-haldar-dev"}) by (pod)
+            /
+            sum(container_spec_memory_limit_bytes{namespace="nilabja-haldar-dev"}) by (pod)
+          ) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          namespace: nilabja-haldar-dev
+        annotations:
+          summary: "High memory usage"
+          description: "Pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of memory limit"
+
+      - alert: HighCPUUsage
+        expr: |
+          (
+            sum(rate(container_cpu_usage_seconds_total{namespace="nilabja-haldar-dev"}[5m])) by (pod)
+            /
+            sum(container_spec_cpu_quota{namespace="nilabja-haldar-dev"} / container_spec_cpu_period{namespace="nilabja-haldar-dev"}) by (pod)
+          ) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          namespace: nilabja-haldar-dev
+        annotations:
+          summary: "High CPU usage"
+          description: "Pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of CPU limit"
+
+  # Database rules
+  - name: database-alerts
+    interval: 30s
+    rules:
+      - alert: PostgreSQLDown
+        expr: |
+          up{job="postgresql",namespace="nilabja-haldar-dev"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          namespace: nilabja-haldar-dev
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL instance {{ $labels.instance }} is down"
+
+      - alert: PostgreSQLTooManyConnections
+        expr: |
+          sum(pg_stat_activity_count{namespace="nilabja-haldar-dev"}) > 80
+        for: 5m
+        labels:
+          severity: warning
+          namespace: nilabja-haldar-dev
+        annotations:
+          summary: "Too many PostgreSQL connections"
+          description: "PostgreSQL has {{ $value }} connections"
+
+# Scrape configurations
+scrapeConfigs:
+  - job_name: 'kubernetes-pods'
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+            - nilabja-haldar-dev
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: pod
+
+  - job_name: 'kubernetes-service-endpoints'
+    kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+            - nilabja-haldar-dev
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scheme]
+        action: replace
+        target_label: __scheme__
+        regex: (https?)
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+        action: replace
+        target_label: __address__
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+      - action: labelmap
+        regex: __meta_kubernetes_service_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_service_name]
+        action: replace
+        target_label: service
+
+# Made with Bob

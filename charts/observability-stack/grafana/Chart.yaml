@@ -1,0 +1,15 @@
+apiVersion: v2
+name: grafana
+description: Grafana visualization platform for metrics and logs
+type: application
+version: 1.0.0
+appVersion: "10.0.0"
+keywords:
+  - grafana
+  - visualization
+  - dashboards
+  - observability
+maintainers:
+  - name: AI-Powered Observability Team
+
+# Made with Bob

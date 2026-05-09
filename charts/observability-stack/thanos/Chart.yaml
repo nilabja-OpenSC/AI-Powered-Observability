@@ -1,0 +1,17 @@
+apiVersion: v2
+name: thanos
+description: Thanos for long-term Prometheus metrics storage and querying
+type: application
+version: 1.0.0
+appVersion: "0.35.0"
+keywords:
+  - thanos
+  - prometheus
+  - metrics
+  - observability
+  - long-term-storage
+maintainers:
+  - name: AI-Powered Observability Team
+    email: observability@example.com
+
+# Made with Bob
