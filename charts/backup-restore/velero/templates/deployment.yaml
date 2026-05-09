@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "velero.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "velero.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "velero.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "velero.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "velero.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: velero
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+        - /velero
+        args:
+        - server
+        - --features=
+        - --uploader-type=restic
+        ports:
+        - name: http
+          containerPort: 8085
+          protocol: TCP
+        - name: metrics
+          containerPort: 8086
+          protocol: TCP
+        env:
+        - name: VELERO_SCRATCH_DIR
+          value: /scratch
+        - name: VELERO_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: LD_LIBRARY_PATH
+          value: /plugins
+        - name: AWS_SHARED_CREDENTIALS_FILE
+          value: /credentials/cloud
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        volumeMounts:
+        - name: plugins
+          mountPath: /plugins
+        - name: scratch
+          mountPath: /scratch
+        - name: cloud-credentials
+          mountPath: /credentials
+        - name: config
+          mountPath: /config
+      volumes:
+      - name: plugins
+        emptyDir: {}
+      - name: scratch
+        emptyDir: {}
+      - name: cloud-credentials
+        secret:
+          secretName: {{ .Values.secrets.name }}
+      - name: config
+        configMap:
+          name: {{ include "velero.fullname" . }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+# Made with Bob

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "chat-ui.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "chat-ui.labels" . | nindent 4 }}
+data:
+  VITE_SUPERVISOR_URL: {{ .Values.env.VITE_SUPERVISOR_URL | quote }}
+  VITE_WS_URL: {{ .Values.env.VITE_WS_URL | quote }}
+  LOG_LEVEL: {{ .Values.env.LOG_LEVEL }}
+  ENVIRONMENT: {{ .Values.env.ENVIRONMENT }}
+
+# Made with Bob

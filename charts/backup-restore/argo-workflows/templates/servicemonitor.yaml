@@ -1,0 +1,22 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "argo-workflows.fullname" . }}-server
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "argo-workflows.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server
+spec:
+  selector:
+    matchLabels:
+      {{- include "argo-workflows.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: server
+  endpoints:
+  - port: web
+    path: /metrics
+    interval: {{ .Values.serviceMonitor.interval }}
+    scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout }}
+{{- end }}
+
+# Made with Bob
