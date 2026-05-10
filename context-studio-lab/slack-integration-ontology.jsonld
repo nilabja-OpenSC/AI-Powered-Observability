@@ -1,0 +1,455 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/slack#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "SlackWorkspace",
+      "@type": "owl:Class",
+      "rdfs:label": "Slack Workspace",
+      "rdfs:comment": "Slack workspace for team communication"
+    },
+    {
+      "@id": "SlackChannel",
+      "@type": "owl:Class",
+      "rdfs:label": "Slack Channel",
+      "rdfs:comment": "Slack channel for specific topics"
+    },
+    {
+      "@id": "SlackMessage",
+      "@type": "owl:Class",
+      "rdfs:label": "Slack Message",
+      "rdfs:comment": "Message posted to Slack"
+    },
+    {
+      "@id": "SlackNotification",
+      "@type": "owl:Class",
+      "rdfs:label": "Slack Notification",
+      "rdfs:subClassOf": "SlackMessage",
+      "rdfs:comment": "Automated notification message"
+    },
+    {
+      "@id": "SlackApprovalRequest",
+      "@type": "owl:Class",
+      "rdfs:label": "Slack Approval Request",
+      "rdfs:subClassOf": "SlackMessage",
+      "rdfs:comment": "Interactive message requesting approval"
+    },
+    {
+      "@id": "SlackBlockKit",
+      "@type": "owl:Class",
+      "rdfs:label": "Slack Block Kit",
+      "rdfs:comment": "Rich message formatting using Block Kit"
+    },
+    {
+      "@id": "SlackWebhook",
+      "@type": "owl:Class",
+      "rdfs:label": "Slack Webhook",
+      "rdfs:comment": "Webhook for sending/receiving messages"
+    },
+    {
+      "@id": "SlackInteraction",
+      "@type": "owl:Class",
+      "rdfs:label": "Slack Interaction",
+      "rdfs:comment": "User interaction with interactive message"
+    },
+    {
+      "@id": "sends",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "sends",
+      "rdfs:domain": "owl:Thing",
+      "rdfs:range": "SlackMessage"
+    },
+    {
+      "@id": "receives",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "receives",
+      "rdfs:domain": "SlackChannel",
+      "rdfs:range": "SlackMessage"
+    },
+    {
+      "@id": "triggers",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "triggers",
+      "rdfs:domain": "SlackInteraction",
+      "rdfs:range": "owl:Thing"
+    },
+    {
+      "@id": "responds",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "responds",
+      "rdfs:domain": "SlackMessage",
+      "rdfs:range": "SlackInteraction"
+    },
+    {
+      "@id": "WORKSPACE-MAIN",
+      "@type": "SlackWorkspace",
+      "rdfs:label": "Main Workspace",
+      "workspaceName": "observability-platform",
+      "workspaceId": "T01234567",
+      "channels": [
+        "CHANNEL-ALERTS",
+        "CHANNEL-INCIDENTS",
+        "CHANNEL-GENERAL"
+      ]
+    },
+    {
+      "@id": "CHANNEL-ALERTS",
+      "@type": "SlackChannel",
+      "rdfs:label": "Observability Alerts Channel",
+      "channelName": "#observability-alerts",
+      "channelId": "C01234567",
+      "purpose": "Automated alerts and approval requests",
+      "private": false
+    },
+    {
+      "@id": "CHANNEL-INCIDENTS",
+      "@type": "SlackChannel",
+      "rdfs:label": "Incidents Channel",
+      "channelName": "#incidents",
+      "channelId": "C01234568",
+      "purpose": "Incident tracking and resolution updates",
+      "private": false
+    },
+    {
+      "@id": "CHANNEL-GENERAL",
+      "@type": "SlackChannel",
+      "rdfs:label": "General Channel",
+      "channelName": "#general",
+      "channelId": "C01234569",
+      "purpose": "General team communication",
+      "private": false
+    },
+    {
+      "@id": "NOTIFICATION-POD-CRASH",
+      "@type": "SlackNotification",
+      "rdfs:label": "Pod Crash Notification",
+      "messageType": "alert",
+      "channel": "CHANNEL-ALERTS",
+      "template": "TEMPLATE-POD-CRASH",
+      "priority": "high",
+      "mentions": ["@platform-team"]
+    },
+    {
+      "@id": "NOTIFICATION-HIGH-CPU",
+      "@type": "SlackNotification",
+      "rdfs:label": "High CPU Notification",
+      "messageType": "warning",
+      "channel": "CHANNEL-ALERTS",
+      "template": "TEMPLATE-HIGH-CPU",
+      "priority": "medium"
+    },
+    {
+      "@id": "APPROVAL-POD-RESTART",
+      "@type": "SlackApprovalRequest",
+      "rdfs:label": "Pod Restart Approval",
+      "messageType": "approval",
+      "channel": "CHANNEL-ALERTS",
+      "template": "TEMPLATE-APPROVAL-REQUEST",
+      "timeout": 300,
+      "defaultAction": "DENY",
+      "actions": [
+        "ACTION-APPROVE",
+        "ACTION-DENY"
+      ]
+    },
+    {
+      "@id": "TEMPLATE-POD-CRASH",
+      "@type": "SlackBlockKit",
+      "rdfs:label": "Pod Crash Template",
+      "blocks": [
+        {
+          "type": "header",
+          "text": {
+            "type": "plain_text",
+            "text": "🚨 Pod CrashLoopBackOff Detected"
+          }
+        },
+        {
+          "type": "section",
+          "fields": [
+            {
+              "type": "mrkdwn",
+              "text": "*Pod:*\n{{pod_name}}"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Namespace:*\n{{namespace}}"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Restart Count:*\n{{restart_count}}"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Last State:*\n{{last_state}}"
+            }
+          ]
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Error Message:*\n```{{error_message}}```"
+          }
+        }
+      ]
+    },
+    {
+      "@id": "TEMPLATE-APPROVAL-REQUEST",
+      "@type": "SlackBlockKit",
+      "rdfs:label": "Approval Request Template",
+      "blocks": [
+        {
+          "type": "header",
+          "text": {
+            "type": "plain_text",
+            "text": "⚠️ Approval Required"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Issue:* {{issue_summary}}"
+          }
+        },
+        {
+          "type": "section",
+          "fields": [
+            {
+              "type": "mrkdwn",
+              "text": "*Affected Resource:*\n{{resource}}"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Severity:*\n{{severity}}"
+            }
+          ]
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Proposed Resolution:*\n{{resolution_steps}}"
+          }
+        },
+        {
+          "type": "actions",
+          "elements": [
+            {
+              "type": "button",
+              "text": {
+                "type": "plain_text",
+                "text": "✅ Approve"
+              },
+              "style": "primary",
+              "action_id": "approve",
+              "value": "{{approval_id}}"
+            },
+            {
+              "type": "button",
+              "text": {
+                "type": "plain_text",
+                "text": "❌ Deny"
+              },
+              "style": "danger",
+              "action_id": "deny",
+              "value": "{{approval_id}}"
+            }
+          ]
+        },
+        {
+          "type": "context",
+          "elements": [
+            {
+              "type": "mrkdwn",
+              "text": "⏱️ This request will timeout in 5 minutes and default to DENY"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "@id": "TEMPLATE-RESOLUTION-SUCCESS",
+      "@type": "SlackBlockKit",
+      "rdfs:label": "Resolution Success Template",
+      "blocks": [
+        {
+          "type": "header",
+          "text": {
+            "type": "plain_text",
+            "text": "✅ Issue Resolved"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Issue:* {{issue_summary}}\n*Resolution:* {{resolution_action}}\n*Status:* Successfully completed"
+          }
+        },
+        {
+          "type": "section",
+          "fields": [
+            {
+              "type": "mrkdwn",
+              "text": "*Approved By:*\n{{approver}}"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Duration:*\n{{duration}}"
+            }
+          ]
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Documentation:* <{{confluence_url}}|View Incident Report>"
+          }
+        }
+      ]
+    },
+    {
+      "@id": "TEMPLATE-RESOLUTION-DENIED",
+      "@type": "SlackBlockKit",
+      "rdfs:label": "Resolution Denied Template",
+      "blocks": [
+        {
+          "type": "header",
+          "text": {
+            "type": "plain_text",
+            "text": "❌ Action Denied"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Issue:* {{issue_summary}}\n*Status:* Action denied by {{denier}}"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Manual Steps Required:*\n{{manual_steps}}"
+          }
+        }
+      ]
+    },
+    {
+      "@id": "ACTION-APPROVE",
+      "@type": "owl:Class",
+      "rdfs:label": "Approve Action",
+      "actionId": "approve",
+      "actionType": "button",
+      "style": "primary",
+      "value": "APPROVED"
+    },
+    {
+      "@id": "ACTION-DENY",
+      "@type": "owl:Class",
+      "rdfs:label": "Deny Action",
+      "actionId": "deny",
+      "actionType": "button",
+      "style": "danger",
+      "value": "DENIED"
+    },
+    {
+      "@id": "WEBHOOK-INCOMING",
+      "@type": "SlackWebhook",
+      "rdfs:label": "Incoming Webhook",
+      "webhookType": "incoming",
+      "url": "https://hooks.slack.com/services/T01234567/B01234567/XXXXXXXXXXXXXXXXXXXX",
+      "channel": "CHANNEL-ALERTS",
+      "purpose": "Send notifications to Slack"
+    },
+    {
+      "@id": "WEBHOOK-INTERACTIVE",
+      "@type": "SlackWebhook",
+      "rdfs:label": "Interactive Webhook",
+      "webhookType": "interactive",
+      "url": "https://observability-platform.example.com/slack/interactive",
+      "purpose": "Receive button clicks and interactions"
+    },
+    {
+      "@id": "INTERACTION-APPROVE-001",
+      "@type": "SlackInteraction",
+      "rdfs:label": "Approval Interaction",
+      "interactionId": "int-2026-05-10-001",
+      "actionId": "approve",
+      "userId": "U01234567",
+      "userName": "user@example.com",
+      "timestamp": "2026-05-10T16:49:00Z",
+      "value": "approval-001",
+      "triggers": "POD-RESTART-EXECUTION"
+    },
+    {
+      "@id": "MESSAGE-EXAMPLE-001",
+      "@type": "SlackApprovalRequest",
+      "rdfs:label": "Example Approval Message",
+      "messageId": "msg-2026-05-10-001",
+      "channel": "CHANNEL-ALERTS",
+      "timestamp": "2026-05-10T16:47:00Z",
+      "content": {
+        "issue_summary": "Backend pod in CrashLoopBackOff",
+        "resource": "backend-7d8f9c5b6-abc12",
+        "severity": "HIGH",
+        "resolution_steps": "1. Delete pod\n2. Wait for new pod to start\n3. Verify pod is running",
+        "approval_id": "approval-001"
+      },
+      "status": "APPROVED",
+      "approvedBy": "U01234567",
+      "approvedAt": "2026-05-10T16:49:00Z"
+    },
+    {
+      "@id": "SLACK-CONFIG",
+      "@type": "owl:Class",
+      "rdfs:label": "Slack Configuration",
+      "configuration": {
+        "botToken": "xoxb-XXXXXXXXXXXX-XXXXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXXXXX",
+        "signingSecret": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "appId": "A01234567",
+        "channels": {
+          "alerts": "C01234567",
+          "incidents": "C01234568",
+          "general": "C01234569"
+        },
+        "webhooks": {
+          "incoming": "https://hooks.slack.com/services/...",
+          "interactive": "https://observability-platform.example.com/slack/interactive"
+        },
+        "rateLimit": {
+          "messagesPerMinute": 60,
+          "burstLimit": 10
+        },
+        "retryPolicy": {
+          "maxRetries": 3,
+          "backoffMultiplier": 2,
+          "initialDelay": 1000
+        }
+      }
+    },
+    {
+      "@id": "SLACK-METRICS",
+      "@type": "owl:Class",
+      "rdfs:label": "Slack Integration Metrics",
+      "metrics": {
+        "messages_sent": "Counter",
+        "messages_failed": "Counter",
+        "approval_requests": "Counter",
+        "approvals_granted": "Counter",
+        "approvals_denied": "Counter",
+        "approval_timeouts": "Counter",
+        "message_latency_seconds": "Histogram",
+        "interaction_latency_seconds": "Histogram"
+      }
+    }
+  ]
+}

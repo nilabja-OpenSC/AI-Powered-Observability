@@ -1,0 +1,76 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/cicd#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "Pipeline",
+      "@type": "owl:Class",
+      "rdfs:label": "Pipeline",
+      "rdfs:comment": "CI/CD pipeline"
+    },
+    {
+      "@id": "Stage",
+      "@type": "owl:Class",
+      "rdfs:label": "Stage",
+      "rdfs:comment": "Pipeline stage"
+    },
+    {
+      "@id": "Artifact",
+      "@type": "owl:Class",
+      "rdfs:label": "Artifact",
+      "rdfs:comment": "Build artifact"
+    },
+    {
+      "@id": "Environment",
+      "@type": "owl:Class",
+      "rdfs:label": "Environment",
+      "rdfs:comment": "Deployment environment"
+    },
+    {
+      "@id": "PIPELINE-BUILD",
+      "@type": "Pipeline",
+      "rdfs:label": "Build Pipeline",
+      "stages": ["STAGE-LINT", "STAGE-TEST", "STAGE-BUILD", "STAGE-PUSH"]
+    },
+    {
+      "@id": "STAGE-LINT",
+      "@type": "Stage",
+      "rdfs:label": "Lint Stage",
+      "stageName": "lint",
+      "commands": ["ruff check", "black --check"]
+    },
+    {
+      "@id": "STAGE-TEST",
+      "@type": "Stage",
+      "rdfs:label": "Test Stage",
+      "stageName": "test",
+      "commands": ["pytest"]
+    },
+    {
+      "@id": "STAGE-BUILD",
+      "@type": "Stage",
+      "rdfs:label": "Build Stage",
+      "stageName": "build",
+      "commands": ["docker build -t backend:latest ."]
+    },
+    {
+      "@id": "STAGE-PUSH",
+      "@type": "Stage",
+      "rdfs:label": "Push Stage",
+      "stageName": "push",
+      "commands": ["docker push backend:latest"]
+    },
+    {
+      "@id": "ENV-DEV",
+      "@type": "Environment",
+      "rdfs:label": "Development Environment",
+      "environmentName": "dev",
+      "namespace": "nilabja-haldar-dev"
+    }
+  ]
+}

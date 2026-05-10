@@ -1,0 +1,317 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/logging#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "loki": "http://grafana.com/loki/schema#"
+  },
+  "@graph": [
+    {
+      "@id": "LogSource",
+      "@type": "owl:Class",
+      "rdfs:label": "Log Source",
+      "rdfs:comment": "Source that generates logs"
+    },
+    {
+      "@id": "LogLevel",
+      "@type": "owl:Class",
+      "rdfs:label": "Log Level",
+      "rdfs:comment": "Severity level of log entry"
+    },
+    {
+      "@id": "LogEntry",
+      "@type": "owl:Class",
+      "rdfs:label": "Log Entry",
+      "rdfs:comment": "Individual log message"
+    },
+    {
+      "@id": "LogStream",
+      "@type": "owl:Class",
+      "rdfs:label": "Log Stream",
+      "rdfs:comment": "Stream of log entries"
+    },
+    {
+      "@id": "LogQuery",
+      "@type": "owl:Class",
+      "rdfs:label": "Log Query",
+      "rdfs:comment": "LogQL query for searching logs"
+    },
+    {
+      "@id": "LogAggregation",
+      "@type": "owl:Class",
+      "rdfs:label": "Log Aggregation",
+      "rdfs:comment": "Aggregated log metrics"
+    },
+    {
+      "@id": "generates",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "generates",
+      "rdfs:domain": "LogSource",
+      "rdfs:range": "LogEntry"
+    },
+    {
+      "@id": "aggregates",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "aggregates",
+      "rdfs:domain": "LogAggregation",
+      "rdfs:range": "LogStream"
+    },
+    {
+      "@id": "queries",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "queries",
+      "rdfs:domain": "LogQuery",
+      "rdfs:range": "LogStream"
+    },
+    {
+      "@id": "filters",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "filters",
+      "rdfs:domain": "LogQuery",
+      "rdfs:range": "LogEntry"
+    },
+    {
+      "@id": "LEVEL-DEBUG",
+      "@type": "LogLevel",
+      "rdfs:label": "DEBUG",
+      "severity": 0,
+      "description": "Detailed debugging information"
+    },
+    {
+      "@id": "LEVEL-INFO",
+      "@type": "LogLevel",
+      "rdfs:label": "INFO",
+      "severity": 1,
+      "description": "Informational messages"
+    },
+    {
+      "@id": "LEVEL-WARN",
+      "@type": "LogLevel",
+      "rdfs:label": "WARN",
+      "severity": 2,
+      "description": "Warning messages"
+    },
+    {
+      "@id": "LEVEL-ERROR",
+      "@type": "LogLevel",
+      "rdfs:label": "ERROR",
+      "severity": 3,
+      "description": "Error messages"
+    },
+    {
+      "@id": "LEVEL-CRITICAL",
+      "@type": "LogLevel",
+      "rdfs:label": "CRITICAL",
+      "severity": 4,
+      "description": "Critical failure messages"
+    },
+    {
+      "@id": "SOURCE-BACKEND-POD",
+      "@type": "LogSource",
+      "rdfs:label": "Backend Pod",
+      "sourceType": "pod",
+      "namespace": "nilabja-haldar-dev",
+      "labels": {
+        "app": "backend",
+        "tier": "application"
+      },
+      "generates": "STREAM-BACKEND-STDOUT"
+    },
+    {
+      "@id": "SOURCE-FRONTEND-POD",
+      "@type": "LogSource",
+      "rdfs:label": "Frontend Pod",
+      "sourceType": "pod",
+      "namespace": "nilabja-haldar-dev",
+      "labels": {
+        "app": "frontend",
+        "tier": "application"
+      }
+    },
+    {
+      "@id": "SOURCE-SUPERVISOR-AGENT-POD",
+      "@type": "LogSource",
+      "rdfs:label": "Supervisor Agent Pod",
+      "sourceType": "pod",
+      "namespace": "nilabja-haldar-dev",
+      "labels": {
+        "app": "supervisor-agent",
+        "tier": "ai-agents"
+      }
+    },
+    {
+      "@id": "SOURCE-PROMETHEUS-POD",
+      "@type": "LogSource",
+      "rdfs:label": "Prometheus Pod",
+      "sourceType": "pod",
+      "namespace": "nilabja-haldar-dev",
+      "labels": {
+        "app": "prometheus",
+        "tier": "observability"
+      }
+    },
+    {
+      "@id": "STREAM-BACKEND-STDOUT",
+      "@type": "LogStream",
+      "rdfs:label": "Backend stdout",
+      "streamType": "stdout",
+      "namespace": "nilabja-haldar-dev",
+      "pod": "backend-*",
+      "container": "backend"
+    },
+    {
+      "@id": "STREAM-BACKEND-STDERR",
+      "@type": "LogStream",
+      "rdfs:label": "Backend stderr",
+      "streamType": "stderr",
+      "namespace": "nilabja-haldar-dev",
+      "pod": "backend-*",
+      "container": "backend"
+    },
+    {
+      "@id": "STREAM-AGENT-LOGS",
+      "@type": "LogStream",
+      "rdfs:label": "AI Agent Logs",
+      "streamType": "stdout",
+      "namespace": "nilabja-haldar-dev",
+      "pod": "*-agent-*",
+      "container": "*-agent"
+    },
+    {
+      "@id": "QUERY-ERROR-LOGS",
+      "@type": "LogQuery",
+      "rdfs:label": "Error Logs Query",
+      "loki:query": "{namespace=\"nilabja-haldar-dev\"} |= \"ERROR\" or |= \"error\"",
+      "description": "Find all error logs in namespace",
+      "timeRange": "1h"
+    },
+    {
+      "@id": "QUERY-BACKEND-5XX",
+      "@type": "LogQuery",
+      "rdfs:label": "Backend 5xx Errors",
+      "loki:query": "{namespace=\"nilabja-haldar-dev\",app=\"backend\"} |= \"status=5\" | json | status >= 500",
+      "description": "Find HTTP 5xx errors from backend",
+      "timeRange": "5m"
+    },
+    {
+      "@id": "QUERY-POD-RESTARTS",
+      "@type": "LogQuery",
+      "rdfs:label": "Pod Restart Logs",
+      "loki:query": "{namespace=\"nilabja-haldar-dev\"} |= \"CrashLoopBackOff\" or |= \"OOMKilled\"",
+      "description": "Find pod restart events",
+      "timeRange": "1h"
+    },
+    {
+      "@id": "QUERY-AGENT-DECISIONS",
+      "@type": "LogQuery",
+      "rdfs:label": "Agent Decision Logs",
+      "loki:query": "{namespace=\"nilabja-haldar-dev\",tier=\"ai-agents\"} |= \"decision\" or |= \"approval\"",
+      "description": "Find AI agent decision logs",
+      "timeRange": "1h"
+    },
+    {
+      "@id": "QUERY-SLOW-REQUESTS",
+      "@type": "LogQuery",
+      "rdfs:label": "Slow Request Logs",
+      "loki:query": "{namespace=\"nilabja-haldar-dev\",app=\"backend\"} | json | duration > 1000",
+      "description": "Find requests taking >1 second",
+      "timeRange": "5m"
+    },
+    {
+      "@id": "AGG-ERROR-RATE",
+      "@type": "LogAggregation",
+      "rdfs:label": "Error Rate by Pod",
+      "loki:query": "sum(rate({namespace=\"nilabja-haldar-dev\"} |= \"ERROR\" [5m])) by (pod)",
+      "description": "Error rate per pod over 5 minutes",
+      "aggregationType": "rate"
+    },
+    {
+      "@id": "AGG-LOG-VOLUME",
+      "@type": "LogAggregation",
+      "rdfs:label": "Log Volume by App",
+      "loki:query": "sum(count_over_time({namespace=\"nilabja-haldar-dev\"}[1h])) by (app)",
+      "description": "Total log entries per app over 1 hour",
+      "aggregationType": "count"
+    },
+    {
+      "@id": "AGG-CRITICAL-LOGS",
+      "@type": "LogAggregation",
+      "rdfs:label": "Critical Log Count",
+      "loki:query": "count_over_time({namespace=\"nilabja-haldar-dev\"} |= \"CRITICAL\" [1h])",
+      "description": "Count of critical logs in last hour",
+      "aggregationType": "count"
+    },
+    {
+      "@id": "ENTRY-BACKEND-REQUEST",
+      "@type": "LogEntry",
+      "rdfs:label": "Backend HTTP Request",
+      "timestamp": "2026-05-10T17:00:00Z",
+      "level": "LEVEL-INFO",
+      "message": "GET /api/products 200 45ms",
+      "labels": {
+        "namespace": "nilabja-haldar-dev",
+        "pod": "backend-7d8f9c5b6-abc12",
+        "app": "backend",
+        "method": "GET",
+        "path": "/api/products",
+        "status": "200",
+        "duration": "45"
+      }
+    },
+    {
+      "@id": "ENTRY-AGENT-APPROVAL",
+      "@type": "LogEntry",
+      "rdfs:label": "Agent Approval Request",
+      "timestamp": "2026-05-10T17:01:00Z",
+      "level": "LEVEL-INFO",
+      "message": "Requesting approval for pod restart: backend-7d8f9c5b6-abc12",
+      "labels": {
+        "namespace": "nilabja-haldar-dev",
+        "pod": "pod-recovery-agent-5f6g7h8-xyz89",
+        "app": "pod-recovery-agent",
+        "action": "restart_pod",
+        "target_pod": "backend-7d8f9c5b6-abc12"
+      }
+    },
+    {
+      "@id": "ENTRY-ERROR-DATABASE",
+      "@type": "LogEntry",
+      "rdfs:label": "Database Connection Error",
+      "timestamp": "2026-05-10T17:02:00Z",
+      "level": "LEVEL-ERROR",
+      "message": "Failed to connect to PostgreSQL: connection timeout",
+      "labels": {
+        "namespace": "nilabja-haldar-dev",
+        "pod": "backend-7d8f9c5b6-abc12",
+        "app": "backend",
+        "error_type": "DatabaseConnectionError"
+      }
+    },
+    {
+      "@id": "PATTERN-HTTP-REQUEST",
+      "@type": "owl:Class",
+      "rdfs:label": "HTTP Request Pattern",
+      "rdfs:subClassOf": "LogEntry",
+      "pattern": "^(?P<method>\\w+) (?P<path>\\S+) (?P<status>\\d{3}) (?P<duration>\\d+)ms$",
+      "fields": ["method", "path", "status", "duration"]
+    },
+    {
+      "@id": "PATTERN-ERROR-STACK",
+      "@type": "owl:Class",
+      "rdfs:label": "Error Stack Trace Pattern",
+      "rdfs:subClassOf": "LogEntry",
+      "pattern": "^(?P<error_type>\\w+Error): (?P<message>.+)\\n(?P<stack_trace>.+)$",
+      "fields": ["error_type", "message", "stack_trace"]
+    },
+    {
+      "@id": "PATTERN-AGENT-DECISION",
+      "@type": "owl:Class",
+      "rdfs:label": "Agent Decision Pattern",
+      "rdfs:subClassOf": "LogEntry",
+      "pattern": "^Agent decision: (?P<action>\\w+) for (?P<resource>\\S+) - (?P<reason>.+)$",
+      "fields": ["action", "resource", "reason"]
+    }
+  ]
+}

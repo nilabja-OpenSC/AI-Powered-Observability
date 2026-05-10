@@ -1,0 +1,74 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/testing#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "TestSuite",
+      "@type": "owl:Class",
+      "rdfs:label": "Test Suite",
+      "rdfs:comment": "Collection of test cases"
+    },
+    {
+      "@id": "TestCase",
+      "@type": "owl:Class",
+      "rdfs:label": "Test Case",
+      "rdfs:comment": "Individual test case"
+    },
+    {
+      "@id": "TestResult",
+      "@type": "owl:Class",
+      "rdfs:label": "Test Result",
+      "rdfs:comment": "Test execution result"
+    },
+    {
+      "@id": "Coverage",
+      "@type": "owl:Class",
+      "rdfs:label": "Coverage",
+      "rdfs:comment": "Code coverage metrics"
+    },
+    {
+      "@id": "SUITE-UNIT",
+      "@type": "TestSuite",
+      "rdfs:label": "Unit Test Suite",
+      "suiteName": "Unit Tests",
+      "testCases": ["TC-001", "TC-002"]
+    },
+    {
+      "@id": "TC-001",
+      "@type": "TestCase",
+      "rdfs:label": "Test Prometheus Query",
+      "testName": "test_prometheus_query",
+      "testType": "UNIT",
+      "status": "PASSED"
+    },
+    {
+      "@id": "TC-002",
+      "@type": "TestCase",
+      "rdfs:label": "Test Slack Approval",
+      "testName": "test_slack_approval_workflow",
+      "testType": "INTEGRATION",
+      "status": "PASSED"
+    },
+    {
+      "@id": "RESULT-001",
+      "@type": "TestResult",
+      "rdfs:label": "Test Result 001",
+      "testCase": "TC-001",
+      "status": "PASSED",
+      "duration": "0.5s"
+    },
+    {
+      "@id": "COV-001",
+      "@type": "Coverage",
+      "rdfs:label": "Backend Coverage",
+      "component": "backend",
+      "lineCoverage": "85%",
+      "branchCoverage": "78%"
+    }
+  ]
+}

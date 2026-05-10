@@ -1,0 +1,63 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/quality#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "QualityMetric",
+      "@type": "owl:Class",
+      "rdfs:label": "Quality Metric",
+      "rdfs:comment": "Code quality metric"
+    },
+    {
+      "@id": "TechnicalDebt",
+      "@type": "owl:Class",
+      "rdfs:label": "Technical Debt",
+      "rdfs:comment": "Technical debt item"
+    },
+    {
+      "@id": "CodeSmell",
+      "@type": "owl:Class",
+      "rdfs:label": "Code Smell",
+      "rdfs:comment": "Code smell"
+    },
+    {
+      "@id": "METRIC-COMPLEXITY",
+      "@type": "QualityMetric",
+      "rdfs:label": "Cyclomatic Complexity",
+      "metricName": "cyclomatic_complexity",
+      "value": "12",
+      "threshold": "15",
+      "status": "PASS"
+    },
+    {
+      "@id": "METRIC-MAINTAINABILITY",
+      "@type": "QualityMetric",
+      "rdfs:label": "Maintainability Index",
+      "metricName": "maintainability_index",
+      "value": "78",
+      "threshold": "65",
+      "status": "PASS"
+    },
+    {
+      "@id": "DEBT-001",
+      "@type": "TechnicalDebt",
+      "rdfs:label": "Refactor Agent Memory",
+      "description": "Agent memory implementation needs refactoring",
+      "severity": "MEDIUM",
+      "estimatedEffort": "4h"
+    },
+    {
+      "@id": "SMELL-001",
+      "@type": "CodeSmell",
+      "rdfs:label": "Long Method",
+      "smellType": "LONG_METHOD",
+      "location": "src/agents/supervisor/main.py:45",
+      "severity": "LOW"
+    }
+  ]
+}

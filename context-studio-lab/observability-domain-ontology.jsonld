@@ -1,0 +1,89 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/observability-domain#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "GoldenSignal",
+      "@type": "owl:Class",
+      "rdfs:label": "Golden Signal",
+      "rdfs:comment": "Four Golden Signals of monitoring"
+    },
+    {
+      "@id": "SLI",
+      "@type": "owl:Class",
+      "rdfs:label": "Service Level Indicator",
+      "rdfs:comment": "Service level indicator"
+    },
+    {
+      "@id": "SLO",
+      "@type": "owl:Class",
+      "rdfs:label": "Service Level Objective",
+      "rdfs:comment": "Service level objective"
+    },
+    {
+      "@id": "ErrorBudget",
+      "@type": "owl:Class",
+      "rdfs:label": "Error Budget",
+      "rdfs:comment": "Error budget"
+    },
+    {
+      "@id": "SIGNAL-LATENCY",
+      "@type": "GoldenSignal",
+      "rdfs:label": "Latency",
+      "signalName": "latency",
+      "description": "Time to serve a request"
+    },
+    {
+      "@id": "SIGNAL-TRAFFIC",
+      "@type": "GoldenSignal",
+      "rdfs:label": "Traffic",
+      "signalName": "traffic",
+      "description": "Demand on the system"
+    },
+    {
+      "@id": "SIGNAL-ERRORS",
+      "@type": "GoldenSignal",
+      "rdfs:label": "Errors",
+      "signalName": "errors",
+      "description": "Rate of failed requests"
+    },
+    {
+      "@id": "SIGNAL-SATURATION",
+      "@type": "GoldenSignal",
+      "rdfs:label": "Saturation",
+      "signalName": "saturation",
+      "description": "System resource utilization"
+    },
+    {
+      "@id": "SLI-AVAILABILITY",
+      "@type": "SLI",
+      "rdfs:label": "Availability SLI",
+      "sliName": "availability",
+      "metric": "up{namespace='nilabja-haldar-dev'}",
+      "target": "99.9%"
+    },
+    {
+      "@id": "SLO-AVAILABILITY",
+      "@type": "SLO",
+      "rdfs:label": "Availability SLO",
+      "sloName": "availability_slo",
+      "sli": "SLI-AVAILABILITY",
+      "target": "99.9%",
+      "window": "30d"
+    },
+    {
+      "@id": "BUDGET-001",
+      "@type": "ErrorBudget",
+      "rdfs:label": "Error Budget 001",
+      "slo": "SLO-AVAILABILITY",
+      "remaining": "0.05%",
+      "consumed": "0.05%",
+      "status": "HEALTHY"
+    }
+  ]
+}

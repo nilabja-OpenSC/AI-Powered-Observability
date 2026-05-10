@@ -1,0 +1,137 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/api#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "http": "http://www.w3.org/2011/http#"
+  },
+  "@graph": [
+    {
+      "@id": "API",
+      "@type": "owl:Class",
+      "rdfs:label": "API",
+      "rdfs:comment": "External API integration"
+    },
+    {
+      "@id": "Endpoint",
+      "@type": "owl:Class",
+      "rdfs:label": "Endpoint",
+      "rdfs:comment": "API endpoint"
+    },
+    {
+      "@id": "Authentication",
+      "@type": "owl:Class",
+      "rdfs:label": "Authentication",
+      "rdfs:comment": "API authentication method"
+    },
+    {
+      "@id": "RateLimit",
+      "@type": "owl:Class",
+      "rdfs:label": "Rate Limit",
+      "rdfs:comment": "API rate limiting configuration"
+    },
+    {
+      "@id": "API-PROMETHEUS",
+      "@type": "API",
+      "rdfs:label": "Prometheus API",
+      "baseUrl": "http://prometheus:9090",
+      "version": "v1",
+      "authentication": "AUTH-NONE",
+      "endpoints": ["ENDPOINT-PROM-QUERY", "ENDPOINT-PROM-QUERY-RANGE"],
+      "rateLimit": "RATE-LIMIT-PROMETHEUS"
+    },
+    {
+      "@id": "API-LOKI",
+      "@type": "API",
+      "rdfs:label": "Loki API",
+      "baseUrl": "http://loki:3100",
+      "version": "v1",
+      "authentication": "AUTH-NONE",
+      "endpoints": ["ENDPOINT-LOKI-QUERY", "ENDPOINT-LOKI-QUERY-RANGE"]
+    },
+    {
+      "@id": "API-GRAFANA",
+      "@type": "API",
+      "rdfs:label": "Grafana API",
+      "baseUrl": "http://grafana:3000",
+      "version": "v1",
+      "authentication": "AUTH-API-KEY",
+      "endpoints": ["ENDPOINT-GRAFANA-DASHBOARDS", "ENDPOINT-GRAFANA-DATASOURCES"]
+    },
+    {
+      "@id": "API-KUBERNETES",
+      "@type": "API",
+      "rdfs:label": "Kubernetes API",
+      "baseUrl": "https://kubernetes.default.svc",
+      "version": "v1",
+      "authentication": "AUTH-SERVICE-ACCOUNT",
+      "endpoints": ["ENDPOINT-K8S-PODS", "ENDPOINT-K8S-DEPLOYMENTS"]
+    },
+    {
+      "@id": "API-SLACK",
+      "@type": "API",
+      "rdfs:label": "Slack API",
+      "baseUrl": "https://slack.com/api",
+      "version": "v1",
+      "authentication": "AUTH-BEARER-TOKEN",
+      "endpoints": ["ENDPOINT-SLACK-POST-MESSAGE", "ENDPOINT-SLACK-INTERACTIVE"],
+      "rateLimit": "RATE-LIMIT-SLACK"
+    },
+    {
+      "@id": "API-CONFLUENCE",
+      "@type": "API",
+      "rdfs:label": "Confluence API",
+      "baseUrl": "https://confluence.example.com/wiki/api",
+      "version": "v2",
+      "authentication": "AUTH-API-TOKEN",
+      "endpoints": ["ENDPOINT-CONFLUENCE-PAGES", "ENDPOINT-CONFLUENCE-ATTACHMENTS"],
+      "rateLimit": "RATE-LIMIT-CONFLUENCE"
+    },
+    {
+      "@id": "ENDPOINT-PROM-QUERY",
+      "@type": "Endpoint",
+      "rdfs:label": "Prometheus Query",
+      "path": "/api/v1/query",
+      "method": "GET",
+      "parameters": ["query", "time"],
+      "responseFormat": "JSON"
+    },
+    {
+      "@id": "AUTH-NONE",
+      "@type": "Authentication",
+      "rdfs:label": "No Authentication",
+      "authType": "none"
+    },
+    {
+      "@id": "AUTH-API-KEY",
+      "@type": "Authentication",
+      "rdfs:label": "API Key Authentication",
+      "authType": "api_key",
+      "headerName": "Authorization",
+      "prefix": "Bearer"
+    },
+    {
+      "@id": "AUTH-SERVICE-ACCOUNT",
+      "@type": "Authentication",
+      "rdfs:label": "Service Account Token",
+      "authType": "service_account",
+      "tokenPath": "/var/run/secrets/kubernetes.io/serviceaccount/token"
+    },
+    {
+      "@id": "RATE-LIMIT-PROMETHEUS",
+      "@type": "RateLimit",
+      "rdfs:label": "Prometheus Rate Limit",
+      "requestsPerMinute": 100,
+      "burstLimit": 20
+    },
+    {
+      "@id": "RATE-LIMIT-SLACK",
+      "@type": "RateLimit",
+      "rdfs:label": "Slack Rate Limit",
+      "requestsPerMinute": 60,
+      "burstLimit": 10
+    }
+  ]
+}

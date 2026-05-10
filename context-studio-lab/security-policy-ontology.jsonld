@@ -1,0 +1,69 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/security#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "SecurityPolicy",
+      "@type": "owl:Class",
+      "rdfs:label": "Security Policy",
+      "rdfs:comment": "Security policy definition"
+    },
+    {
+      "@id": "RBACPolicy",
+      "@type": "owl:Class",
+      "rdfs:label": "RBAC Policy",
+      "rdfs:subClassOf": "SecurityPolicy"
+    },
+    {
+      "@id": "NetworkPolicy",
+      "@type": "owl:Class",
+      "rdfs:label": "Network Policy",
+      "rdfs:subClassOf": "SecurityPolicy"
+    },
+    {
+      "@id": "PodSecurityPolicy",
+      "@type": "owl:Class",
+      "rdfs:label": "Pod Security Policy",
+      "rdfs:subClassOf": "SecurityPolicy"
+    },
+    {
+      "@id": "Secret",
+      "@type": "owl:Class",
+      "rdfs:label": "Secret",
+      "rdfs:comment": "Sensitive data storage"
+    },
+    {
+      "@id": "POLICY-RBAC-NAMESPACE",
+      "@type": "RBACPolicy",
+      "rdfs:label": "Namespace RBAC Policy",
+      "scope": "namespace",
+      "namespace": "nilabja-haldar-dev",
+      "rules": [
+        "ServiceAccounts have minimal permissions",
+        "No ClusterRoles allowed",
+        "All operations namespace-scoped"
+      ]
+    },
+    {
+      "@id": "POLICY-NETWORK-DENY-ALL",
+      "@type": "NetworkPolicy",
+      "rdfs:label": "Default Deny Network Policy",
+      "policyType": "Ingress",
+      "podSelector": {},
+      "ingress": []
+    },
+    {
+      "@id": "SECRET-API-KEYS",
+      "@type": "Secret",
+      "rdfs:label": "API Keys Secret",
+      "secretName": "api-keys",
+      "namespace": "nilabja-haldar-dev",
+      "keys": ["OPENAI_API_KEY", "SLACK_BOT_TOKEN", "CONFLUENCE_API_TOKEN"]
+    }
+  ]
+}

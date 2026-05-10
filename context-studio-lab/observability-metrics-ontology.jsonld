@@ -1,0 +1,389 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/metrics#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "prom": "http://prometheus.io/schema#"
+  },
+  "@graph": [
+    {
+      "@id": "Metric",
+      "@type": "owl:Class",
+      "rdfs:label": "Metric",
+      "rdfs:comment": "Base class for all metrics"
+    },
+    {
+      "@id": "Counter",
+      "@type": "owl:Class",
+      "rdfs:label": "Counter",
+      "rdfs:subClassOf": "Metric",
+      "rdfs:comment": "Monotonically increasing metric"
+    },
+    {
+      "@id": "Gauge",
+      "@type": "owl:Class",
+      "rdfs:label": "Gauge",
+      "rdfs:subClassOf": "Metric",
+      "rdfs:comment": "Metric that can go up or down"
+    },
+    {
+      "@id": "Histogram",
+      "@type": "owl:Class",
+      "rdfs:label": "Histogram",
+      "rdfs:subClassOf": "Metric",
+      "rdfs:comment": "Metric with buckets for distribution"
+    },
+    {
+      "@id": "Summary",
+      "@type": "owl:Class",
+      "rdfs:label": "Summary",
+      "rdfs:subClassOf": "Metric",
+      "rdfs:comment": "Metric with quantiles"
+    },
+    {
+      "@id": "Alert",
+      "@type": "owl:Class",
+      "rdfs:label": "Alert",
+      "rdfs:comment": "Alert rule based on metrics"
+    },
+    {
+      "@id": "Dashboard",
+      "@type": "owl:Class",
+      "rdfs:label": "Dashboard",
+      "rdfs:comment": "Visualization dashboard"
+    },
+    {
+      "@id": "Panel",
+      "@type": "owl:Class",
+      "rdfs:label": "Panel",
+      "rdfs:comment": "Dashboard panel/widget"
+    },
+    {
+      "@id": "SLI",
+      "@type": "owl:Class",
+      "rdfs:label": "Service Level Indicator",
+      "rdfs:comment": "Quantitative measure of service level"
+    },
+    {
+      "@id": "SLO",
+      "@type": "owl:Class",
+      "rdfs:label": "Service Level Objective",
+      "rdfs:comment": "Target value for SLI"
+    },
+    {
+      "@id": "ErrorBudget",
+      "@type": "owl:Class",
+      "rdfs:label": "Error Budget",
+      "rdfs:comment": "Allowed error rate based on SLO"
+    },
+    {
+      "@id": "measures",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "measures",
+      "rdfs:domain": "Metric",
+      "rdfs:range": "owl:Thing"
+    },
+    {
+      "@id": "triggers",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "triggers",
+      "rdfs:domain": "Metric",
+      "rdfs:range": "Alert"
+    },
+    {
+      "@id": "visualizes",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "visualizes",
+      "rdfs:domain": "Panel",
+      "rdfs:range": "Metric"
+    },
+    {
+      "@id": "contains",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "contains",
+      "rdfs:domain": "Dashboard",
+      "rdfs:range": "Panel"
+    },
+    {
+      "@id": "tracks",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "tracks",
+      "rdfs:domain": "SLI",
+      "rdfs:range": "Metric"
+    },
+    {
+      "@id": "defines",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "defines",
+      "rdfs:domain": "SLO",
+      "rdfs:range": "SLI"
+    },
+    {
+      "@id": "breaches",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "breaches",
+      "rdfs:domain": "Metric",
+      "rdfs:range": "ErrorBudget"
+    },
+    {
+      "@id": "METRIC-CPU-USAGE",
+      "@type": "Gauge",
+      "rdfs:label": "CPU Usage",
+      "prom:name": "container_cpu_usage_seconds_total",
+      "prom:type": "gauge",
+      "description": "CPU usage in seconds",
+      "unit": "seconds",
+      "labels": ["namespace", "pod", "container"],
+      "measures": "CPU consumption"
+    },
+    {
+      "@id": "METRIC-MEMORY-USAGE",
+      "@type": "Gauge",
+      "rdfs:label": "Memory Usage",
+      "prom:name": "container_memory_working_set_bytes",
+      "prom:type": "gauge",
+      "description": "Memory usage in bytes",
+      "unit": "bytes",
+      "labels": ["namespace", "pod", "container"],
+      "measures": "Memory consumption"
+    },
+    {
+      "@id": "METRIC-HTTP-REQUESTS-TOTAL",
+      "@type": "Counter",
+      "rdfs:label": "HTTP Requests Total",
+      "prom:name": "http_requests_total",
+      "prom:type": "counter",
+      "description": "Total HTTP requests",
+      "unit": "requests",
+      "labels": ["namespace", "pod", "method", "status", "path"],
+      "measures": "HTTP traffic"
+    },
+    {
+      "@id": "METRIC-HTTP-REQUEST-DURATION",
+      "@type": "Histogram",
+      "rdfs:label": "HTTP Request Duration",
+      "prom:name": "http_request_duration_seconds",
+      "prom:type": "histogram",
+      "description": "HTTP request latency",
+      "unit": "seconds",
+      "labels": ["namespace", "pod", "method", "path"],
+      "buckets": [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+      "measures": "Request latency"
+    },
+    {
+      "@id": "METRIC-HTTP-ERRORS",
+      "@type": "Counter",
+      "rdfs:label": "HTTP Errors",
+      "prom:name": "http_requests_total",
+      "prom:query": "sum(rate(http_requests_total{status=~\"5..\"}[5m]))",
+      "description": "HTTP 5xx error rate",
+      "unit": "errors/sec",
+      "labels": ["namespace", "pod"],
+      "measures": "Error rate"
+    },
+    {
+      "@id": "METRIC-POD-RESTARTS",
+      "@type": "Counter",
+      "rdfs:label": "Pod Restarts",
+      "prom:name": "kube_pod_container_status_restarts_total",
+      "prom:type": "counter",
+      "description": "Total pod restarts",
+      "unit": "restarts",
+      "labels": ["namespace", "pod", "container"],
+      "measures": "Pod stability"
+    },
+    {
+      "@id": "METRIC-DISK-USAGE",
+      "@type": "Gauge",
+      "rdfs:label": "Disk Usage",
+      "prom:name": "kubelet_volume_stats_used_bytes",
+      "prom:type": "gauge",
+      "description": "Disk usage in bytes",
+      "unit": "bytes",
+      "labels": ["namespace", "persistentvolumeclaim"],
+      "measures": "Storage consumption"
+    },
+    {
+      "@id": "ALERT-POD-CRASHLOOPBACKOFF",
+      "@type": "Alert",
+      "rdfs:label": "Pod CrashLoopBackOff",
+      "alertName": "PodCrashLoopBackOff",
+      "severity": "critical",
+      "description": "Pod is in CrashLoopBackOff state",
+      "expr": "kube_pod_container_status_waiting_reason{reason=\"CrashLoopBackOff\",namespace=\"nilabja-haldar-dev\"} > 0",
+      "for": "5m",
+      "annotations": {
+        "summary": "Pod {{ $labels.pod }} in CrashLoopBackOff",
+        "description": "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is in CrashLoopBackOff state"
+      }
+    },
+    {
+      "@id": "ALERT-HIGH-CPU",
+      "@type": "Alert",
+      "rdfs:label": "High CPU Usage",
+      "alertName": "HighCPUUsage",
+      "severity": "warning",
+      "description": "CPU usage above 80%",
+      "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"nilabja-haldar-dev\"}[5m])) by (pod) > 0.8",
+      "for": "10m",
+      "annotations": {
+        "summary": "High CPU usage on {{ $labels.pod }}",
+        "description": "Pod {{ $labels.pod }} CPU usage is {{ $value }}%"
+      }
+    },
+    {
+      "@id": "ALERT-HIGH-MEMORY",
+      "@type": "Alert",
+      "rdfs:label": "High Memory Usage",
+      "alertName": "HighMemoryUsage",
+      "severity": "warning",
+      "description": "Memory usage above 80%",
+      "expr": "sum(container_memory_working_set_bytes{namespace=\"nilabja-haldar-dev\"}) by (pod) / sum(container_spec_memory_limit_bytes{namespace=\"nilabja-haldar-dev\"}) by (pod) > 0.8",
+      "for": "10m"
+    },
+    {
+      "@id": "ALERT-POD-NOT-READY",
+      "@type": "Alert",
+      "rdfs:label": "Pod Not Ready",
+      "alertName": "PodNotReady",
+      "severity": "warning",
+      "description": "Pod not ready for 5 minutes",
+      "expr": "kube_pod_status_ready{condition=\"false\",namespace=\"nilabja-haldar-dev\"} > 0",
+      "for": "5m"
+    },
+    {
+      "@id": "ALERT-HIGH-ERROR-RATE",
+      "@type": "Alert",
+      "rdfs:label": "High Error Rate",
+      "alertName": "HighErrorRate",
+      "severity": "critical",
+      "description": "HTTP 5xx error rate above 5%",
+      "expr": "sum(rate(http_requests_total{status=~\"5..\",namespace=\"nilabja-haldar-dev\"}[5m])) / sum(rate(http_requests_total{namespace=\"nilabja-haldar-dev\"}[5m])) > 0.05",
+      "for": "5m"
+    },
+    {
+      "@id": "DASHBOARD-GOLDEN-SIGNALS",
+      "@type": "Dashboard",
+      "rdfs:label": "Golden Signals Dashboard",
+      "description": "Four Golden Signals: Latency, Traffic, Errors, Saturation",
+      "contains": [
+        "PANEL-LATENCY",
+        "PANEL-TRAFFIC",
+        "PANEL-ERRORS",
+        "PANEL-SATURATION"
+      ]
+    },
+    {
+      "@id": "PANEL-LATENCY",
+      "@type": "Panel",
+      "rdfs:label": "Request Latency",
+      "panelType": "graph",
+      "visualizes": "METRIC-HTTP-REQUEST-DURATION",
+      "query": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"nilabja-haldar-dev\"}[5m])) by (le, pod))"
+    },
+    {
+      "@id": "PANEL-TRAFFIC",
+      "@type": "Panel",
+      "rdfs:label": "Request Rate",
+      "panelType": "graph",
+      "visualizes": "METRIC-HTTP-REQUESTS-TOTAL",
+      "query": "sum(rate(http_requests_total{namespace=\"nilabja-haldar-dev\"}[5m])) by (pod)"
+    },
+    {
+      "@id": "PANEL-ERRORS",
+      "@type": "Panel",
+      "rdfs:label": "Error Rate",
+      "panelType": "graph",
+      "visualizes": "METRIC-HTTP-ERRORS",
+      "query": "sum(rate(http_requests_total{status=~\"5..\",namespace=\"nilabja-haldar-dev\"}[5m])) by (pod)"
+    },
+    {
+      "@id": "PANEL-SATURATION",
+      "@type": "Panel",
+      "rdfs:label": "Resource Saturation",
+      "panelType": "graph",
+      "visualizes": ["METRIC-CPU-USAGE", "METRIC-MEMORY-USAGE"],
+      "query": "sum(rate(container_cpu_usage_seconds_total{namespace=\"nilabja-haldar-dev\"}[5m])) by (pod)"
+    },
+    {
+      "@id": "DASHBOARD-RESOURCE-USAGE",
+      "@type": "Dashboard",
+      "rdfs:label": "Resource Usage Dashboard",
+      "description": "CPU, Memory, Disk usage across all pods",
+      "contains": [
+        "PANEL-CPU-USAGE",
+        "PANEL-MEMORY-USAGE",
+        "PANEL-DISK-USAGE"
+      ]
+    },
+    {
+      "@id": "PANEL-CPU-USAGE",
+      "@type": "Panel",
+      "rdfs:label": "CPU Usage by Pod",
+      "panelType": "graph",
+      "visualizes": "METRIC-CPU-USAGE"
+    },
+    {
+      "@id": "PANEL-MEMORY-USAGE",
+      "@type": "Panel",
+      "rdfs:label": "Memory Usage by Pod",
+      "panelType": "graph",
+      "visualizes": "METRIC-MEMORY-USAGE"
+    },
+    {
+      "@id": "PANEL-DISK-USAGE",
+      "@type": "Panel",
+      "rdfs:label": "Disk Usage by PVC",
+      "panelType": "graph",
+      "visualizes": "METRIC-DISK-USAGE"
+    },
+    {
+      "@id": "SLI-AVAILABILITY",
+      "@type": "SLI",
+      "rdfs:label": "Service Availability",
+      "description": "Percentage of successful requests",
+      "tracks": "METRIC-HTTP-REQUESTS-TOTAL",
+      "calculation": "(total_requests - error_requests) / total_requests * 100"
+    },
+    {
+      "@id": "SLI-LATENCY",
+      "@type": "SLI",
+      "rdfs:label": "Request Latency",
+      "description": "95th percentile request latency",
+      "tracks": "METRIC-HTTP-REQUEST-DURATION",
+      "calculation": "histogram_quantile(0.95, http_request_duration_seconds_bucket)"
+    },
+    {
+      "@id": "SLO-AVAILABILITY-99-9",
+      "@type": "SLO",
+      "rdfs:label": "99.9% Availability SLO",
+      "description": "Service must be available 99.9% of the time",
+      "defines": "SLI-AVAILABILITY",
+      "target": 99.9,
+      "unit": "percent",
+      "window": "30d"
+    },
+    {
+      "@id": "SLO-LATENCY-P95-500MS",
+      "@type": "SLO",
+      "rdfs:label": "P95 Latency < 500ms SLO",
+      "description": "95th percentile latency must be under 500ms",
+      "defines": "SLI-LATENCY",
+      "target": 500,
+      "unit": "milliseconds",
+      "window": "30d"
+    },
+    {
+      "@id": "ERROR-BUDGET-AVAILABILITY",
+      "@type": "ErrorBudget",
+      "rdfs:label": "Availability Error Budget",
+      "description": "Allowed downtime: 43.2 minutes per 30 days",
+      "slo": "SLO-AVAILABILITY-99-9",
+      "allowedErrorRate": 0.1,
+      "unit": "percent",
+      "remaining": 95.5
+    }
+  ]
+}

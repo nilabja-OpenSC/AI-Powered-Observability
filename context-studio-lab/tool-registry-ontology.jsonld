@@ -1,0 +1,531 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/tools#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "Tool",
+      "@type": "owl:Class",
+      "rdfs:label": "Tool",
+      "rdfs:comment": "Capability available to AI agents"
+    },
+    {
+      "@id": "QueryTool",
+      "@type": "owl:Class",
+      "rdfs:label": "Query Tool",
+      "rdfs:subClassOf": "Tool",
+      "rdfs:comment": "Tool for querying data sources"
+    },
+    {
+      "@id": "MutationTool",
+      "@type": "owl:Class",
+      "rdfs:label": "Mutation Tool",
+      "rdfs:subClassOf": "Tool",
+      "rdfs:comment": "Tool that modifies system state"
+    },
+    {
+      "@id": "NotificationTool",
+      "@type": "owl:Class",
+      "rdfs:label": "Notification Tool",
+      "rdfs:subClassOf": "Tool",
+      "rdfs:comment": "Tool for sending notifications"
+    },
+    {
+      "@id": "Parameter",
+      "@type": "owl:Class",
+      "rdfs:label": "Parameter",
+      "rdfs:comment": "Tool parameter definition"
+    },
+    {
+      "@id": "Permission",
+      "@type": "owl:Class",
+      "rdfs:label": "Permission",
+      "rdfs:comment": "Required permission to use tool"
+    },
+    {
+      "@id": "Constraint",
+      "@type": "owl:Class",
+      "rdfs:label": "Constraint",
+      "rdfs:comment": "Constraint on tool usage"
+    },
+    {
+      "@id": "requires",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "requires",
+      "rdfs:domain": "Tool",
+      "rdfs:range": ["Parameter", "Permission"]
+    },
+    {
+      "@id": "validates",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "validates",
+      "rdfs:domain": "Tool",
+      "rdfs:range": "Parameter"
+    },
+    {
+      "@id": "enforces",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "enforces",
+      "rdfs:domain": "Tool",
+      "rdfs:range": "Constraint"
+    },
+    {
+      "@id": "limits",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "limits",
+      "rdfs:domain": "Constraint",
+      "rdfs:range": "Tool"
+    },
+    {
+      "@id": "TOOL-PROMETHEUS-QUERY",
+      "@type": "QueryTool",
+      "rdfs:label": "Prometheus Query Tool",
+      "description": "Execute PromQL queries against Prometheus",
+      "category": "observability",
+      "approvalRequired": false,
+      "parameters": [
+        "PARAM-PROMQL",
+        "PARAM-TIME-RANGE",
+        "PARAM-NAMESPACE"
+      ],
+      "permissions": ["PERM-READ-METRICS"],
+      "constraints": ["CONSTRAINT-NAMESPACE-FILTER"],
+      "rateLimit": "100 requests/minute",
+      "timeout": 30
+    },
+    {
+      "@id": "TOOL-LOKI-QUERY",
+      "@type": "QueryTool",
+      "rdfs:label": "Loki Query Tool",
+      "description": "Execute LogQL queries against Loki",
+      "category": "observability",
+      "approvalRequired": false,
+      "parameters": [
+        "PARAM-LOGQL",
+        "PARAM-TIME-RANGE",
+        "PARAM-NAMESPACE"
+      ],
+      "permissions": ["PERM-READ-LOGS"],
+      "constraints": ["CONSTRAINT-NAMESPACE-FILTER"],
+      "rateLimit": "100 requests/minute",
+      "timeout": 30
+    },
+    {
+      "@id": "TOOL-GRAFANA-API",
+      "@type": "QueryTool",
+      "rdfs:label": "Grafana API Tool",
+      "description": "Access Grafana dashboards and panels",
+      "category": "observability",
+      "approvalRequired": false,
+      "parameters": [
+        "PARAM-DASHBOARD-ID",
+        "PARAM-PANEL-ID"
+      ],
+      "permissions": ["PERM-READ-DASHBOARDS"],
+      "rateLimit": "50 requests/minute",
+      "timeout": 15
+    },
+    {
+      "@id": "TOOL-KUBECTL-GET",
+      "@type": "QueryTool",
+      "rdfs:label": "Kubectl Get Tool",
+      "description": "Get Kubernetes resources",
+      "category": "kubernetes",
+      "approvalRequired": false,
+      "parameters": [
+        "PARAM-RESOURCE-TYPE",
+        "PARAM-RESOURCE-NAME",
+        "PARAM-NAMESPACE"
+      ],
+      "permissions": ["PERM-K8S-GET"],
+      "constraints": ["CONSTRAINT-NAMESPACE-SCOPED"],
+      "rateLimit": "200 requests/minute",
+      "timeout": 10
+    },
+    {
+      "@id": "TOOL-KUBECTL-DELETE",
+      "@type": "MutationTool",
+      "rdfs:label": "Kubectl Delete Tool",
+      "description": "Delete Kubernetes resources (pod restart)",
+      "category": "kubernetes",
+      "approvalRequired": true,
+      "approvalTimeout": 300,
+      "parameters": [
+        "PARAM-RESOURCE-TYPE",
+        "PARAM-RESOURCE-NAME",
+        "PARAM-NAMESPACE"
+      ],
+      "permissions": ["PERM-K8S-DELETE"],
+      "constraints": [
+        "CONSTRAINT-NAMESPACE-SCOPED",
+        "CONSTRAINT-APPROVAL-REQUIRED"
+      ],
+      "rateLimit": "10 requests/minute",
+      "timeout": 30
+    },
+    {
+      "@id": "TOOL-SLACK-APPROVAL",
+      "@type": "NotificationTool",
+      "rdfs:label": "Slack Approval Tool",
+      "description": "Send Slack notification with approve/deny buttons",
+      "category": "notification",
+      "approvalRequired": false,
+      "parameters": [
+        "PARAM-CHANNEL",
+        "PARAM-MESSAGE",
+        "PARAM-ISSUE-DETAILS"
+      ],
+      "permissions": ["PERM-SLACK-POST"],
+      "rateLimit": "20 requests/minute",
+      "timeout": 10
+    },
+    {
+      "@id": "TOOL-SLACK-NOTIFY",
+      "@type": "NotificationTool",
+      "rdfs:label": "Slack Notify Tool",
+      "description": "Send simple Slack notification",
+      "category": "notification",
+      "approvalRequired": false,
+      "parameters": [
+        "PARAM-CHANNEL",
+        "PARAM-MESSAGE"
+      ],
+      "permissions": ["PERM-SLACK-POST"],
+      "rateLimit": "50 requests/minute",
+      "timeout": 5
+    },
+    {
+      "@id": "TOOL-CONFLUENCE-CREATE",
+      "@type": "MutationTool",
+      "rdfs:label": "Confluence Create Tool",
+      "description": "Create Confluence page for incident documentation",
+      "category": "documentation",
+      "approvalRequired": false,
+      "parameters": [
+        "PARAM-SPACE",
+        "PARAM-TITLE",
+        "PARAM-CONTENT"
+      ],
+      "permissions": ["PERM-CONFLUENCE-WRITE"],
+      "rateLimit": "10 requests/minute",
+      "timeout": 15
+    },
+    {
+      "@id": "TOOL-VELERO-BACKUP",
+      "@type": "MutationTool",
+      "rdfs:label": "Velero Backup Tool",
+      "description": "Create Velero backup",
+      "category": "backup",
+      "approvalRequired": false,
+      "parameters": [
+        "PARAM-BACKUP-NAME",
+        "PARAM-NAMESPACE",
+        "PARAM-RESOURCES"
+      ],
+      "permissions": ["PERM-VELERO-BACKUP"],
+      "constraints": ["CONSTRAINT-NAMESPACE-SCOPED"],
+      "rateLimit": "5 requests/minute",
+      "timeout": 60
+    },
+    {
+      "@id": "TOOL-VELERO-RESTORE",
+      "@type": "MutationTool",
+      "rdfs:label": "Velero Restore Tool",
+      "description": "Restore from Velero backup",
+      "category": "backup",
+      "approvalRequired": true,
+      "approvalTimeout": 300,
+      "parameters": [
+        "PARAM-BACKUP-NAME",
+        "PARAM-NAMESPACE"
+      ],
+      "permissions": ["PERM-VELERO-RESTORE"],
+      "constraints": [
+        "CONSTRAINT-NAMESPACE-SCOPED",
+        "CONSTRAINT-APPROVAL-REQUIRED"
+      ],
+      "rateLimit": "2 requests/minute",
+      "timeout": 120
+    },
+    {
+      "@id": "TOOL-INTENT-CLASSIFIER",
+      "@type": "QueryTool",
+      "rdfs:label": "Intent Classifier Tool",
+      "description": "Classify user query intent using LLM",
+      "category": "ai",
+      "approvalRequired": false,
+      "parameters": [
+        "PARAM-QUERY-TEXT"
+      ],
+      "permissions": ["PERM-LLM-ACCESS"],
+      "rateLimit": "100 requests/minute",
+      "timeout": 10
+    },
+    {
+      "@id": "PARAM-PROMQL",
+      "@type": "Parameter",
+      "rdfs:label": "PromQL Query",
+      "parameterName": "query",
+      "dataType": "string",
+      "required": true,
+      "description": "PromQL query expression",
+      "validation": "valid PromQL syntax"
+    },
+    {
+      "@id": "PARAM-LOGQL",
+      "@type": "Parameter",
+      "rdfs:label": "LogQL Query",
+      "parameterName": "query",
+      "dataType": "string",
+      "required": true,
+      "description": "LogQL query expression",
+      "validation": "valid LogQL syntax"
+    },
+    {
+      "@id": "PARAM-TIME-RANGE",
+      "@type": "Parameter",
+      "rdfs:label": "Time Range",
+      "parameterName": "time_range",
+      "dataType": "string",
+      "required": false,
+      "default": "5m",
+      "description": "Time range for query (e.g., 5m, 1h, 1d)",
+      "validation": "valid duration format"
+    },
+    {
+      "@id": "PARAM-NAMESPACE",
+      "@type": "Parameter",
+      "rdfs:label": "Namespace",
+      "parameterName": "namespace",
+      "dataType": "string",
+      "required": true,
+      "default": "nilabja-haldar-dev",
+      "description": "Kubernetes namespace",
+      "validation": "must be 'nilabja-haldar-dev'"
+    },
+    {
+      "@id": "PARAM-RESOURCE-TYPE",
+      "@type": "Parameter",
+      "rdfs:label": "Resource Type",
+      "parameterName": "resource_type",
+      "dataType": "string",
+      "required": true,
+      "description": "Kubernetes resource type (e.g., pod, deployment)",
+      "validation": "valid k8s resource type"
+    },
+    {
+      "@id": "PARAM-RESOURCE-NAME",
+      "@type": "Parameter",
+      "rdfs:label": "Resource Name",
+      "parameterName": "resource_name",
+      "dataType": "string",
+      "required": true,
+      "description": "Name of Kubernetes resource"
+    },
+    {
+      "@id": "PARAM-CHANNEL",
+      "@type": "Parameter",
+      "rdfs:label": "Slack Channel",
+      "parameterName": "channel",
+      "dataType": "string",
+      "required": true,
+      "default": "#observability-alerts",
+      "description": "Slack channel for notification"
+    },
+    {
+      "@id": "PARAM-MESSAGE",
+      "@type": "Parameter",
+      "rdfs:label": "Message",
+      "parameterName": "message",
+      "dataType": "string",
+      "required": true,
+      "description": "Message content"
+    },
+    {
+      "@id": "PARAM-ISSUE-DETAILS",
+      "@type": "Parameter",
+      "rdfs:label": "Issue Details",
+      "parameterName": "issue_details",
+      "dataType": "object",
+      "required": true,
+      "description": "Structured issue information",
+      "fields": [
+        "summary",
+        "affected_resources",
+        "resolution_steps"
+      ]
+    },
+    {
+      "@id": "PARAM-SPACE",
+      "@type": "Parameter",
+      "rdfs:label": "Confluence Space",
+      "parameterName": "space",
+      "dataType": "string",
+      "required": true,
+      "default": "OBSERVABILITY",
+      "description": "Confluence space key"
+    },
+    {
+      "@id": "PARAM-TITLE",
+      "@type": "Parameter",
+      "rdfs:label": "Page Title",
+      "parameterName": "title",
+      "dataType": "string",
+      "required": true,
+      "description": "Confluence page title"
+    },
+    {
+      "@id": "PARAM-CONTENT",
+      "@type": "Parameter",
+      "rdfs:label": "Page Content",
+      "parameterName": "content",
+      "dataType": "string",
+      "required": true,
+      "description": "Confluence page content (markdown)"
+    },
+    {
+      "@id": "PARAM-BACKUP-NAME",
+      "@type": "Parameter",
+      "rdfs:label": "Backup Name",
+      "parameterName": "backup_name",
+      "dataType": "string",
+      "required": true,
+      "description": "Name for backup"
+    },
+    {
+      "@id": "PARAM-RESOURCES",
+      "@type": "Parameter",
+      "rdfs:label": "Resources",
+      "parameterName": "resources",
+      "dataType": "array",
+      "required": false,
+      "description": "List of resources to backup"
+    },
+    {
+      "@id": "PARAM-QUERY-TEXT",
+      "@type": "Parameter",
+      "rdfs:label": "Query Text",
+      "parameterName": "query_text",
+      "dataType": "string",
+      "required": true,
+      "description": "User query to classify"
+    },
+    {
+      "@id": "PERM-READ-METRICS",
+      "@type": "Permission",
+      "rdfs:label": "Read Metrics Permission",
+      "permissionName": "metrics:read",
+      "scope": "namespace",
+      "namespace": "nilabja-haldar-dev"
+    },
+    {
+      "@id": "PERM-READ-LOGS",
+      "@type": "Permission",
+      "rdfs:label": "Read Logs Permission",
+      "permissionName": "logs:read",
+      "scope": "namespace",
+      "namespace": "nilabja-haldar-dev"
+    },
+    {
+      "@id": "PERM-READ-DASHBOARDS",
+      "@type": "Permission",
+      "rdfs:label": "Read Dashboards Permission",
+      "permissionName": "dashboards:read",
+      "scope": "global"
+    },
+    {
+      "@id": "PERM-K8S-GET",
+      "@type": "Permission",
+      "rdfs:label": "Kubernetes Get Permission",
+      "permissionName": "k8s:get",
+      "scope": "namespace",
+      "namespace": "nilabja-haldar-dev",
+      "resources": ["pods", "deployments", "services"]
+    },
+    {
+      "@id": "PERM-K8S-DELETE",
+      "@type": "Permission",
+      "rdfs:label": "Kubernetes Delete Permission",
+      "permissionName": "k8s:delete",
+      "scope": "namespace",
+      "namespace": "nilabja-haldar-dev",
+      "resources": ["pods"]
+    },
+    {
+      "@id": "PERM-SLACK-POST",
+      "@type": "Permission",
+      "rdfs:label": "Slack Post Permission",
+      "permissionName": "slack:post",
+      "scope": "global"
+    },
+    {
+      "@id": "PERM-CONFLUENCE-WRITE",
+      "@type": "Permission",
+      "rdfs:label": "Confluence Write Permission",
+      "permissionName": "confluence:write",
+      "scope": "space",
+      "space": "OBSERVABILITY"
+    },
+    {
+      "@id": "PERM-VELERO-BACKUP",
+      "@type": "Permission",
+      "rdfs:label": "Velero Backup Permission",
+      "permissionName": "velero:backup",
+      "scope": "namespace",
+      "namespace": "nilabja-haldar-dev"
+    },
+    {
+      "@id": "PERM-VELERO-RESTORE",
+      "@type": "Permission",
+      "rdfs:label": "Velero Restore Permission",
+      "permissionName": "velero:restore",
+      "scope": "namespace",
+      "namespace": "nilabja-haldar-dev"
+    },
+    {
+      "@id": "PERM-LLM-ACCESS",
+      "@type": "Permission",
+      "rdfs:label": "LLM Access Permission",
+      "permissionName": "llm:access",
+      "scope": "global"
+    },
+    {
+      "@id": "CONSTRAINT-NAMESPACE-FILTER",
+      "@type": "Constraint",
+      "rdfs:label": "Namespace Filter Constraint",
+      "description": "All queries must include namespace filter",
+      "constraintType": "mandatory_filter",
+      "filter": "namespace=\"nilabja-haldar-dev\""
+    },
+    {
+      "@id": "CONSTRAINT-NAMESPACE-SCOPED",
+      "@type": "Constraint",
+      "rdfs:label": "Namespace Scoped Constraint",
+      "description": "Operations limited to specific namespace",
+      "constraintType": "scope_restriction",
+      "allowedNamespace": "nilabja-haldar-dev"
+    },
+    {
+      "@id": "CONSTRAINT-APPROVAL-REQUIRED",
+      "@type": "Constraint",
+      "rdfs:label": "Approval Required Constraint",
+      "description": "Human approval required before execution",
+      "constraintType": "approval",
+      "timeout": 300,
+      "defaultAction": "DENY"
+    },
+    {
+      "@id": "CONSTRAINT-RATE-LIMIT",
+      "@type": "Constraint",
+      "rdfs:label": "Rate Limit Constraint",
+      "description": "Limit requests per time window",
+      "constraintType": "rate_limit",
+      "maxRequests": 100,
+      "timeWindow": "1 minute"
+    }
+  ]
+}

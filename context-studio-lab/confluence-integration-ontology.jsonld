@@ -1,0 +1,355 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/confluence#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "ConfluenceSpace",
+      "@type": "owl:Class",
+      "rdfs:label": "Confluence Space",
+      "rdfs:comment": "Confluence space for organizing content"
+    },
+    {
+      "@id": "ConfluencePage",
+      "@type": "owl:Class",
+      "rdfs:label": "Confluence Page",
+      "rdfs:comment": "Documentation page in Confluence"
+    },
+    {
+      "@id": "IncidentReport",
+      "@type": "owl:Class",
+      "rdfs:label": "Incident Report",
+      "rdfs:subClassOf": "ConfluencePage",
+      "rdfs:comment": "Incident documentation page"
+    },
+    {
+      "@id": "Postmortem",
+      "@type": "owl:Class",
+      "rdfs:label": "Postmortem",
+      "rdfs:subClassOf": "ConfluencePage",
+      "rdfs:comment": "Post-incident analysis document"
+    },
+    {
+      "@id": "Runbook",
+      "@type": "owl:Class",
+      "rdfs:label": "Runbook",
+      "rdfs:subClassOf": "ConfluencePage",
+      "rdfs:comment": "Operational procedure documentation"
+    },
+    {
+      "@id": "PageTemplate",
+      "@type": "owl:Class",
+      "rdfs:label": "Page Template",
+      "rdfs:comment": "Template for creating pages"
+    },
+    {
+      "@id": "Attachment",
+      "@type": "owl:Class",
+      "rdfs:label": "Attachment",
+      "rdfs:comment": "File attached to page"
+    },
+    {
+      "@id": "Label",
+      "@type": "owl:Class",
+      "rdfs:label": "Label",
+      "rdfs:comment": "Tag for categorizing pages"
+    },
+    {
+      "@id": "creates",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "creates",
+      "rdfs:domain": "owl:Thing",
+      "rdfs:range": "ConfluencePage"
+    },
+    {
+      "@id": "updates",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "updates",
+      "rdfs:domain": "owl:Thing",
+      "rdfs:range": "ConfluencePage"
+    },
+    {
+      "@id": "links",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "links",
+      "rdfs:domain": "ConfluencePage",
+      "rdfs:range": "ConfluencePage"
+    },
+    {
+      "@id": "attaches",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "attaches",
+      "rdfs:domain": "ConfluencePage",
+      "rdfs:range": "Attachment"
+    },
+    {
+      "@id": "SPACE-OBSERVABILITY",
+      "@type": "ConfluenceSpace",
+      "rdfs:label": "Observability Space",
+      "spaceKey": "OBSERVABILITY",
+      "spaceName": "Observability Platform",
+      "description": "Documentation for observability platform",
+      "homepage": "https://confluence.example.com/display/OBSERVABILITY"
+    },
+    {
+      "@id": "SPACE-INCIDENTS",
+      "@type": "ConfluenceSpace",
+      "rdfs:label": "Incidents Space",
+      "spaceKey": "INCIDENTS",
+      "spaceName": "Incident Reports",
+      "description": "Incident documentation and postmortems",
+      "homepage": "https://confluence.example.com/display/INCIDENTS"
+    },
+    {
+      "@id": "SPACE-RUNBOOKS",
+      "@type": "ConfluenceSpace",
+      "rdfs:label": "Runbooks Space",
+      "spaceKey": "RUNBOOKS",
+      "spaceName": "Operational Runbooks",
+      "description": "Standard operating procedures",
+      "homepage": "https://confluence.example.com/display/RUNBOOKS"
+    },
+    {
+      "@id": "TEMPLATE-INCIDENT",
+      "@type": "PageTemplate",
+      "rdfs:label": "Incident Report Template",
+      "templateName": "Incident Report",
+      "space": "SPACE-INCIDENTS",
+      "content": "# Incident: {{incident_id}}\n\n## Summary\n{{summary}}\n\n## Timeline\n{{timeline}}\n\n## Impact\n- **Affected Services:** {{affected_services}}\n- **Users Impacted:** {{users_impacted}}\n- **Duration:** {{duration}}\n\n## Root Cause\n{{root_cause}}\n\n## Resolution\n{{resolution_steps}}\n\n## Action Items\n{{action_items}}\n\n## Lessons Learned\n{{lessons_learned}}"
+    },
+    {
+      "@id": "TEMPLATE-POSTMORTEM",
+      "@type": "PageTemplate",
+      "rdfs:label": "Postmortem Template",
+      "templateName": "Postmortem",
+      "space": "SPACE-INCIDENTS",
+      "content": "# Postmortem: {{title}}\n\n## Incident Details\n- **Date:** {{date}}\n- **Duration:** {{duration}}\n- **Severity:** {{severity}}\n- **Incident ID:** {{incident_id}}\n\n## What Happened\n{{what_happened}}\n\n## Root Cause Analysis\n### Contributing Factors\n{{contributing_factors}}\n\n### Root Cause\n{{root_cause}}\n\n## Impact Assessment\n{{impact}}\n\n## Timeline\n{{timeline}}\n\n## Resolution\n{{resolution}}\n\n## Action Items\n| Action | Owner | Due Date | Status |\n|--------|-------|----------|--------|\n{{action_items}}\n\n## What Went Well\n{{went_well}}\n\n## What Could Be Improved\n{{improvements}}\n\n## Lessons Learned\n{{lessons_learned}}"
+    },
+    {
+      "@id": "TEMPLATE-RUNBOOK",
+      "@type": "PageTemplate",
+      "rdfs:label": "Runbook Template",
+      "templateName": "Runbook",
+      "space": "SPACE-RUNBOOKS",
+      "content": "# Runbook: {{title}}\n\n## Purpose\n{{purpose}}\n\n## Prerequisites\n{{prerequisites}}\n\n## Procedure\n{{procedure}}\n\n## Verification\n{{verification}}\n\n## Rollback\n{{rollback}}\n\n## Related Documentation\n{{related_docs}}"
+    },
+    {
+      "@id": "PAGE-INCIDENT-001",
+      "@type": "IncidentReport",
+      "rdfs:label": "Incident Report: Backend Pod CrashLoopBackOff",
+      "pageId": "123456789",
+      "pageTitle": "Incident-2026-05-10-001: Backend Pod CrashLoopBackOff",
+      "space": "SPACE-INCIDENTS",
+      "url": "https://confluence.example.com/display/INCIDENTS/Incident-2026-05-10-001",
+      "createdBy": "pod-recovery-agent",
+      "createdAt": "2026-05-10T17:00:00Z",
+      "labels": [
+        "LABEL-INCIDENT",
+        "LABEL-POD-CRASH",
+        "LABEL-RESOLVED"
+      ],
+      "content": {
+        "incident_id": "INC-2026-05-10-001",
+        "summary": "Backend pod backend-7d8f9c5b6-abc12 entered CrashLoopBackOff state due to OOM",
+        "affected_services": "Backend API",
+        "duration": "15 minutes",
+        "root_cause": "Memory leak causing OOM",
+        "resolution_steps": "1. Pod restarted\n2. Memory limits configured\n3. Memory leak investigation initiated"
+      }
+    },
+    {
+      "@id": "PAGE-POSTMORTEM-001",
+      "@type": "Postmortem",
+      "rdfs:label": "Postmortem: Backend OOM Incident",
+      "pageId": "123456790",
+      "pageTitle": "Postmortem: Backend OOM Incident (2026-05-10)",
+      "space": "SPACE-INCIDENTS",
+      "url": "https://confluence.example.com/display/INCIDENTS/Postmortem-2026-05-10-001",
+      "createdBy": "platform-team",
+      "createdAt": "2026-05-11T10:00:00Z",
+      "labels": [
+        "LABEL-POSTMORTEM",
+        "LABEL-OOM",
+        "LABEL-ACTION-ITEMS"
+      ],
+      "links": ["PAGE-INCIDENT-001"]
+    },
+    {
+      "@id": "PAGE-RUNBOOK-POD-RESTART",
+      "@type": "Runbook",
+      "rdfs:label": "Runbook: Pod Restart Procedure",
+      "pageId": "123456791",
+      "pageTitle": "Runbook: Pod Restart Procedure",
+      "space": "SPACE-RUNBOOKS",
+      "url": "https://confluence.example.com/display/RUNBOOKS/Pod-Restart",
+      "createdBy": "platform-team",
+      "createdAt": "2026-05-01T10:00:00Z",
+      "labels": [
+        "LABEL-RUNBOOK",
+        "LABEL-POD-MANAGEMENT"
+      ]
+    },
+    {
+      "@id": "LABEL-INCIDENT",
+      "@type": "Label",
+      "rdfs:label": "Incident Label",
+      "labelName": "incident",
+      "description": "Incident report pages"
+    },
+    {
+      "@id": "LABEL-POSTMORTEM",
+      "@type": "Label",
+      "rdfs:label": "Postmortem Label",
+      "labelName": "postmortem",
+      "description": "Postmortem analysis pages"
+    },
+    {
+      "@id": "LABEL-RUNBOOK",
+      "@type": "Label",
+      "rdfs:label": "Runbook Label",
+      "labelName": "runbook",
+      "description": "Operational runbook pages"
+    },
+    {
+      "@id": "LABEL-POD-CRASH",
+      "@type": "Label",
+      "rdfs:label": "Pod Crash Label",
+      "labelName": "pod-crash",
+      "description": "Pod crash related incidents"
+    },
+    {
+      "@id": "LABEL-OOM",
+      "@type": "Label",
+      "rdfs:label": "OOM Label",
+      "labelName": "oom",
+      "description": "Out of memory incidents"
+    },
+    {
+      "@id": "LABEL-RESOLVED",
+      "@type": "Label",
+      "rdfs:label": "Resolved Label",
+      "labelName": "resolved",
+      "description": "Resolved incidents"
+    },
+    {
+      "@id": "ATTACHMENT-LOGS",
+      "@type": "Attachment",
+      "rdfs:label": "Pod Logs Attachment",
+      "fileName": "backend-pod-logs.txt",
+      "fileSize": 524288,
+      "mimeType": "text/plain",
+      "attachedTo": "PAGE-INCIDENT-001",
+      "uploadedBy": "pod-recovery-agent",
+      "uploadedAt": "2026-05-10T17:00:30Z"
+    },
+    {
+      "@id": "ATTACHMENT-METRICS",
+      "@type": "Attachment",
+      "rdfs:label": "Metrics Screenshot",
+      "fileName": "cpu-memory-metrics.png",
+      "fileSize": 102400,
+      "mimeType": "image/png",
+      "attachedTo": "PAGE-INCIDENT-001",
+      "uploadedBy": "pod-recovery-agent",
+      "uploadedAt": "2026-05-10T17:00:45Z"
+    },
+    {
+      "@id": "CONFLUENCE-CONFIG",
+      "@type": "owl:Class",
+      "rdfs:label": "Confluence Configuration",
+      "configuration": {
+        "baseUrl": "https://confluence.example.com",
+        "apiVersion": "v2",
+        "authentication": {
+          "type": "api_token",
+          "username": "observability-bot@example.com",
+          "token": "XXXXXXXXXXXXXXXXXXXX"
+        },
+        "spaces": {
+          "observability": "OBSERVABILITY",
+          "incidents": "INCIDENTS",
+          "runbooks": "RUNBOOKS"
+        },
+        "defaultSpace": "INCIDENTS",
+        "rateLimit": {
+          "requestsPerSecond": 10,
+          "burstLimit": 20
+        },
+        "retryPolicy": {
+          "maxRetries": 3,
+          "backoffMultiplier": 2,
+          "initialDelay": 1000
+        }
+      }
+    },
+    {
+      "@id": "CONFLUENCE-API",
+      "@type": "owl:Class",
+      "rdfs:label": "Confluence API Operations",
+      "operations": {
+        "createPage": {
+          "method": "POST",
+          "endpoint": "/wiki/api/v2/pages",
+          "requiredParams": ["spaceId", "title", "body"],
+          "optionalParams": ["parentId", "status"]
+        },
+        "updatePage": {
+          "method": "PUT",
+          "endpoint": "/wiki/api/v2/pages/{pageId}",
+          "requiredParams": ["pageId", "version", "title", "body"]
+        },
+        "getPage": {
+          "method": "GET",
+          "endpoint": "/wiki/api/v2/pages/{pageId}",
+          "requiredParams": ["pageId"]
+        },
+        "addAttachment": {
+          "method": "POST",
+          "endpoint": "/wiki/api/v2/pages/{pageId}/attachments",
+          "requiredParams": ["pageId", "file"]
+        },
+        "addLabel": {
+          "method": "POST",
+          "endpoint": "/wiki/api/v2/pages/{pageId}/labels",
+          "requiredParams": ["pageId", "name"]
+        }
+      }
+    },
+    {
+      "@id": "CONFLUENCE-METRICS",
+      "@type": "owl:Class",
+      "rdfs:label": "Confluence Integration Metrics",
+      "metrics": {
+        "pages_created": "Counter",
+        "pages_updated": "Counter",
+        "pages_failed": "Counter",
+        "attachments_uploaded": "Counter",
+        "api_requests": "Counter",
+        "api_errors": "Counter",
+        "api_latency_seconds": "Histogram"
+      }
+    },
+    {
+      "@id": "AUTOMATION-INCIDENT-DOCUMENTATION",
+      "@type": "owl:Class",
+      "rdfs:label": "Automated Incident Documentation",
+      "workflow": {
+        "trigger": "Incident resolved",
+        "steps": [
+          "1. Gather incident details from agent memory",
+          "2. Format content using incident template",
+          "3. Create Confluence page in INCIDENTS space",
+          "4. Add relevant labels (incident, severity, status)",
+          "5. Attach logs and metrics screenshots",
+          "6. Link to related pages (runbooks, previous incidents)",
+          "7. Send Confluence URL to Slack",
+          "8. Update incident tracking dashboard"
+        ]
+      }
+    }
+  ]
+}

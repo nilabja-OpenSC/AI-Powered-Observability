@@ -1,0 +1,67 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/vectorstore#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "VectorStore",
+      "@type": "owl:Class",
+      "rdfs:label": "Vector Store",
+      "rdfs:comment": "Vector database for embeddings"
+    },
+    {
+      "@id": "Collection",
+      "@type": "owl:Class",
+      "rdfs:label": "Collection",
+      "rdfs:comment": "Collection of vectors"
+    },
+    {
+      "@id": "Embedding",
+      "@type": "owl:Class",
+      "rdfs:label": "Embedding",
+      "rdfs:comment": "Vector embedding"
+    },
+    {
+      "@id": "Query",
+      "@type": "owl:Class",
+      "rdfs:label": "Query",
+      "rdfs:comment": "Similarity search query"
+    },
+    {
+      "@id": "STORE-CHROMA",
+      "@type": "VectorStore",
+      "rdfs:label": "Chroma Vector Store",
+      "technology": "Chroma",
+      "persistDirectory": "./agent_memory",
+      "collections": ["COLLECTION-CONVERSATIONS", "COLLECTION-INCIDENTS", "COLLECTION-RESOLUTIONS"]
+    },
+    {
+      "@id": "COLLECTION-CONVERSATIONS",
+      "@type": "Collection",
+      "rdfs:label": "Conversations Collection",
+      "collectionName": "conversations",
+      "embeddingModel": "text-embedding-ada-002",
+      "dimensions": 1536
+    },
+    {
+      "@id": "COLLECTION-INCIDENTS",
+      "@type": "Collection",
+      "rdfs:label": "Incidents Collection",
+      "collectionName": "incidents",
+      "embeddingModel": "text-embedding-ada-002",
+      "dimensions": 1536
+    },
+    {
+      "@id": "COLLECTION-RESOLUTIONS",
+      "@type": "Collection",
+      "rdfs:label": "Resolutions Collection",
+      "collectionName": "resolutions",
+      "embeddingModel": "text-embedding-ada-002",
+      "dimensions": 1536
+    }
+  ]
+}
