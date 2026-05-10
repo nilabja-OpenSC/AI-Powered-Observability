@@ -1,0 +1,76 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/access#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "AuthenticationMethod",
+      "@type": "owl:Class",
+      "rdfs:label": "Authentication Method",
+      "rdfs:comment": "Authentication method"
+    },
+    {
+      "@id": "AuthorizationPolicy",
+      "@type": "owl:Class",
+      "rdfs:label": "Authorization Policy",
+      "rdfs:comment": "Authorization policy"
+    },
+    {
+      "@id": "Permission",
+      "@type": "owl:Class",
+      "rdfs:label": "Permission",
+      "rdfs:comment": "Access permission"
+    },
+    {
+      "@id": "AUTH-OAUTH",
+      "@type": "AuthenticationMethod",
+      "rdfs:label": "OAuth 2.0",
+      "methodName": "OAuth 2.0",
+      "provider": "OpenShift OAuth"
+    },
+    {
+      "@id": "AUTH-API-KEY",
+      "@type": "AuthenticationMethod",
+      "rdfs:label": "API Key",
+      "methodName": "API Key",
+      "expirationPolicy": "90 days"
+    },
+    {
+      "@id": "POLICY-NAMESPACE-ISOLATION",
+      "@type": "AuthorizationPolicy",
+      "rdfs:label": "Namespace Isolation Policy",
+      "policyName": "namespace_isolation",
+      "description": "All operations scoped to nilabja-haldar-dev namespace",
+      "enforcement": "STRICT"
+    },
+    {
+      "@id": "POLICY-APPROVAL-REQUIRED",
+      "@type": "AuthorizationPolicy",
+      "rdfs:label": "Approval Required Policy",
+      "policyName": "approval_required",
+      "description": "All mutations require human approval via Slack",
+      "timeout": "5 minutes",
+      "defaultAction": "DENY"
+    },
+    {
+      "@id": "PERM-VIEW-METRICS",
+      "@type": "Permission",
+      "rdfs:label": "View Metrics Permission",
+      "permissionName": "view_metrics",
+      "resource": "prometheus",
+      "action": "query"
+    },
+    {
+      "@id": "PERM-APPROVE-ACTIONS",
+      "@type": "Permission",
+      "rdfs:label": "Approve Actions Permission",
+      "permissionName": "approve_actions",
+      "resource": "slack",
+      "action": "approve"
+    }
+  ]
+}

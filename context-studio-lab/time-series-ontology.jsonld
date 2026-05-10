@@ -1,0 +1,79 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/timeseries#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "TimeSeries",
+      "@type": "owl:Class",
+      "rdfs:label": "Time Series",
+      "rdfs:comment": "Time series data"
+    },
+    {
+      "@id": "RetentionPolicy",
+      "@type": "owl:Class",
+      "rdfs:label": "Retention Policy",
+      "rdfs:comment": "Data retention configuration"
+    },
+    {
+      "@id": "Aggregation",
+      "@type": "owl:Class",
+      "rdfs:label": "Aggregation",
+      "rdfs:comment": "Time series aggregation"
+    },
+    {
+      "@id": "Downsampling",
+      "@type": "owl:Class",
+      "rdfs:label": "Downsampling",
+      "rdfs:comment": "Reduce resolution over time"
+    },
+    {
+      "@id": "TS-PROMETHEUS",
+      "@type": "TimeSeries",
+      "rdfs:label": "Prometheus Time Series",
+      "storage": "Prometheus TSDB",
+      "retention": "RETENTION-6H",
+      "resolution": "15s"
+    },
+    {
+      "@id": "TS-THANOS",
+      "@type": "TimeSeries",
+      "rdfs:label": "Thanos Time Series",
+      "storage": "S3",
+      "retention": "RETENTION-30D",
+      "downsampling": ["DOWNSAMPLE-5M", "DOWNSAMPLE-1H"]
+    },
+    {
+      "@id": "RETENTION-6H",
+      "@type": "RetentionPolicy",
+      "rdfs:label": "6 Hour Retention",
+      "duration": "6h",
+      "storage": "local"
+    },
+    {
+      "@id": "RETENTION-30D",
+      "@type": "RetentionPolicy",
+      "rdfs:label": "30 Day Retention",
+      "duration": "30d",
+      "storage": "object_storage"
+    },
+    {
+      "@id": "DOWNSAMPLE-5M",
+      "@type": "Downsampling",
+      "rdfs:label": "5 Minute Downsampling",
+      "resolution": "5m",
+      "aggregation": "avg"
+    },
+    {
+      "@id": "DOWNSAMPLE-1H",
+      "@type": "Downsampling",
+      "rdfs:label": "1 Hour Downsampling",
+      "resolution": "1h",
+      "aggregation": "avg"
+    }
+  ]
+}

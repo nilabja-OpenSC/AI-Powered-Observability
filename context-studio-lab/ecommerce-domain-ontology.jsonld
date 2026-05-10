@@ -1,0 +1,70 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/ecommerce#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "Product",
+      "@type": "owl:Class",
+      "rdfs:label": "Product",
+      "rdfs:comment": "E-commerce product"
+    },
+    {
+      "@id": "Order",
+      "@type": "owl:Class",
+      "rdfs:label": "Order",
+      "rdfs:comment": "Customer order"
+    },
+    {
+      "@id": "Customer",
+      "@type": "owl:Class",
+      "rdfs:label": "Customer",
+      "rdfs:comment": "Customer"
+    },
+    {
+      "@id": "Cart",
+      "@type": "owl:Class",
+      "rdfs:label": "Shopping Cart",
+      "rdfs:comment": "Shopping cart"
+    },
+    {
+      "@id": "PRODUCT-001",
+      "@type": "Product",
+      "rdfs:label": "Laptop",
+      "productName": "Laptop",
+      "price": "999.99",
+      "stock": "50"
+    },
+    {
+      "@id": "ORDER-001",
+      "@type": "Order",
+      "rdfs:label": "Order 001",
+      "orderId": "ORD-001",
+      "customer": "CUSTOMER-001",
+      "products": ["PRODUCT-001"],
+      "status": "SHIPPED",
+      "total": "999.99"
+    },
+    {
+      "@id": "CUSTOMER-001",
+      "@type": "Customer",
+      "rdfs:label": "Customer 001",
+      "customerId": "CUST-001",
+      "email": "customer@example.com",
+      "orders": ["ORDER-001"]
+    },
+    {
+      "@id": "CART-001",
+      "@type": "Cart",
+      "rdfs:label": "Cart 001",
+      "cartId": "CART-001",
+      "customer": "CUSTOMER-001",
+      "items": ["PRODUCT-001"],
+      "total": "999.99"
+    }
+  ]
+}

@@ -1,0 +1,401 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/incidents#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "dcterms": "http://purl.org/dc/terms/"
+  },
+  "@graph": [
+    {
+      "@id": "Incident",
+      "@type": "owl:Class",
+      "rdfs:label": "Incident",
+      "rdfs:comment": "Operational incident requiring attention"
+    },
+    {
+      "@id": "Severity",
+      "@type": "owl:Class",
+      "rdfs:label": "Severity",
+      "rdfs:comment": "Incident severity level"
+    },
+    {
+      "@id": "IncidentState",
+      "@type": "owl:Class",
+      "rdfs:label": "Incident State",
+      "rdfs:comment": "Current state in incident lifecycle"
+    },
+    {
+      "@id": "ResolutionStep",
+      "@type": "owl:Class",
+      "rdfs:label": "Resolution Step",
+      "rdfs:comment": "Action taken to resolve incident"
+    },
+    {
+      "@id": "Postmortem",
+      "@type": "owl:Class",
+      "rdfs:label": "Postmortem",
+      "rdfs:comment": "Post-incident analysis document"
+    },
+    {
+      "@id": "RootCause",
+      "@type": "owl:Class",
+      "rdfs:label": "Root Cause",
+      "rdfs:comment": "Underlying cause of incident"
+    },
+    {
+      "@id": "ActionItem",
+      "@type": "owl:Class",
+      "rdfs:label": "Action Item",
+      "rdfs:comment": "Follow-up task from incident"
+    },
+    {
+      "@id": "Timeline",
+      "@type": "owl:Class",
+      "rdfs:label": "Timeline",
+      "rdfs:comment": "Chronological sequence of incident events"
+    },
+    {
+      "@id": "detects",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "detects",
+      "rdfs:comment": "System or person who detected incident"
+    },
+    {
+      "@id": "escalates",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "escalates",
+      "rdfs:domain": "Incident",
+      "rdfs:range": "Severity"
+    },
+    {
+      "@id": "resolves",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "resolves",
+      "rdfs:domain": "ResolutionStep",
+      "rdfs:range": "Incident"
+    },
+    {
+      "@id": "documents",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "documents",
+      "rdfs:domain": "Postmortem",
+      "rdfs:range": "Incident"
+    },
+    {
+      "@id": "identifies",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "identifies",
+      "rdfs:domain": "Postmortem",
+      "rdfs:range": "RootCause"
+    },
+    {
+      "@id": "generates",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "generates",
+      "rdfs:domain": "Postmortem",
+      "rdfs:range": "ActionItem"
+    },
+    {
+      "@id": "transitions",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "transitions",
+      "rdfs:domain": "Incident",
+      "rdfs:range": "IncidentState"
+    },
+    {
+      "@id": "SEV-CRITICAL",
+      "@type": "Severity",
+      "rdfs:label": "Critical",
+      "level": 1,
+      "description": "Service completely down, immediate action required",
+      "responseTime": "15 minutes",
+      "notificationChannels": ["slack", "pagerduty", "email"]
+    },
+    {
+      "@id": "SEV-HIGH",
+      "@type": "Severity",
+      "rdfs:label": "High",
+      "level": 2,
+      "description": "Major functionality impaired, urgent action needed",
+      "responseTime": "1 hour",
+      "notificationChannels": ["slack", "email"]
+    },
+    {
+      "@id": "SEV-MEDIUM",
+      "@type": "Severity",
+      "rdfs:label": "Medium",
+      "level": 3,
+      "description": "Partial functionality affected, action needed soon",
+      "responseTime": "4 hours",
+      "notificationChannels": ["slack"]
+    },
+    {
+      "@id": "SEV-LOW",
+      "@type": "Severity",
+      "rdfs:label": "Low",
+      "level": 4,
+      "description": "Minor issue, can be addressed in normal workflow",
+      "responseTime": "24 hours",
+      "notificationChannels": ["slack"]
+    },
+    {
+      "@id": "STATE-DETECTED",
+      "@type": "IncidentState",
+      "rdfs:label": "Detected",
+      "description": "Incident detected but not yet acknowledged"
+    },
+    {
+      "@id": "STATE-ACKNOWLEDGED",
+      "@type": "IncidentState",
+      "rdfs:label": "Acknowledged",
+      "description": "Incident acknowledged by responder"
+    },
+    {
+      "@id": "STATE-INVESTIGATING",
+      "@type": "IncidentState",
+      "rdfs:label": "Investigating",
+      "description": "Root cause investigation in progress"
+    },
+    {
+      "@id": "STATE-APPROVAL-PENDING",
+      "@type": "IncidentState",
+      "rdfs:label": "Approval Pending",
+      "description": "Waiting for human approval to execute resolution"
+    },
+    {
+      "@id": "STATE-RESOLVING",
+      "@type": "IncidentState",
+      "rdfs:label": "Resolving",
+      "description": "Resolution steps being executed"
+    },
+    {
+      "@id": "STATE-RESOLVED",
+      "@type": "IncidentState",
+      "rdfs:label": "Resolved",
+      "description": "Incident resolved, monitoring for recurrence"
+    },
+    {
+      "@id": "STATE-CLOSED",
+      "@type": "IncidentState",
+      "rdfs:label": "Closed",
+      "description": "Incident closed with postmortem completed"
+    },
+    {
+      "@id": "INCIDENT-POD-CRASHLOOP-001",
+      "@type": "Incident",
+      "incidentId": "INC-2026-05-10-001",
+      "rdfs:label": "Backend Pod CrashLoopBackOff",
+      "description": "Backend pod backend-7d8f9c5b6-abc12 in CrashLoopBackOff state",
+      "severity": "SEV-HIGH",
+      "state": "STATE-RESOLVED",
+      "detectedAt": "2026-05-10T16:45:00Z",
+      "acknowledgedAt": "2026-05-10T16:46:00Z",
+      "resolvedAt": "2026-05-10T16:52:00Z",
+      "affectedResources": [
+        "backend-7d8f9c5b6-abc12",
+        "backend service"
+      ],
+      "detectedBy": "Prometheus Alert: PodCrashLoopBackOff",
+      "assignedTo": "pod-recovery-agent"
+    },
+    {
+      "@id": "INCIDENT-HIGH-CPU-002",
+      "@type": "Incident",
+      "incidentId": "INC-2026-05-10-002",
+      "rdfs:label": "High CPU Usage on Frontend",
+      "description": "Frontend pod CPU usage at 95% for 10 minutes",
+      "severity": "SEV-MEDIUM",
+      "state": "STATE-INVESTIGATING",
+      "detectedAt": "2026-05-10T17:00:00Z",
+      "acknowledgedAt": "2026-05-10T17:01:00Z",
+      "affectedResources": [
+        "frontend-8e9f0d1c2-def34"
+      ],
+      "detectedBy": "Prometheus Alert: HighCPUUsage"
+    },
+    {
+      "@id": "STEP-RESTART-POD",
+      "@type": "ResolutionStep",
+      "rdfs:label": "Restart Pod",
+      "stepNumber": 1,
+      "action": "kubectl delete pod backend-7d8f9c5b6-abc12 -n nilabja-haldar-dev",
+      "executedAt": "2026-05-10T16:50:00Z",
+      "executedBy": "pod-recovery-agent",
+      "approvedBy": "user@example.com",
+      "result": "success",
+      "resolves": "INCIDENT-POD-CRASHLOOP-001"
+    },
+    {
+      "@id": "STEP-VERIFY-RECOVERY",
+      "@type": "ResolutionStep",
+      "rdfs:label": "Verify Pod Recovery",
+      "stepNumber": 2,
+      "action": "kubectl get pod backend-7d8f9c5b6-xyz99 -n nilabja-haldar-dev",
+      "executedAt": "2026-05-10T16:52:00Z",
+      "executedBy": "pod-recovery-agent",
+      "result": "success - pod running",
+      "resolves": "INCIDENT-POD-CRASHLOOP-001"
+    },
+    {
+      "@id": "STEP-UPDATE-SLACK",
+      "@type": "ResolutionStep",
+      "rdfs:label": "Update Slack Channel",
+      "stepNumber": 3,
+      "action": "Post resolution status to #observability-alerts",
+      "executedAt": "2026-05-10T16:53:00Z",
+      "executedBy": "pod-recovery-agent",
+      "result": "success",
+      "resolves": "INCIDENT-POD-CRASHLOOP-001"
+    },
+    {
+      "@id": "POSTMORTEM-001",
+      "@type": "Postmortem",
+      "rdfs:label": "Postmortem: Backend Pod CrashLoopBackOff",
+      "incidentId": "INC-2026-05-10-001",
+      "createdAt": "2026-05-10T17:00:00Z",
+      "createdBy": "pod-recovery-agent",
+      "documents": "INCIDENT-POD-CRASHLOOP-001",
+      "identifies": "ROOT-CAUSE-OOM",
+      "generates": ["ACTION-ITEM-001", "ACTION-ITEM-002"]
+    },
+    {
+      "@id": "ROOT-CAUSE-OOM",
+      "@type": "RootCause",
+      "rdfs:label": "Out of Memory",
+      "description": "Pod exceeded memory limit due to memory leak in application code",
+      "category": "resource-exhaustion",
+      "evidence": [
+        "OOMKilled event in pod logs",
+        "Memory usage graph showing steady increase",
+        "No memory limit configured in deployment"
+      ]
+    },
+    {
+      "@id": "ACTION-ITEM-001",
+      "@type": "ActionItem",
+      "rdfs:label": "Add Memory Limits",
+      "description": "Configure memory limits for backend deployment",
+      "priority": "high",
+      "assignedTo": "platform-team",
+      "dueDate": "2026-05-12",
+      "status": "open"
+    },
+    {
+      "@id": "ACTION-ITEM-002",
+      "@type": "ActionItem",
+      "rdfs:label": "Investigate Memory Leak",
+      "description": "Profile application to identify and fix memory leak",
+      "priority": "high",
+      "assignedTo": "backend-team",
+      "dueDate": "2026-05-15",
+      "status": "open"
+    },
+    {
+      "@id": "TIMELINE-001",
+      "@type": "Timeline",
+      "rdfs:label": "Incident Timeline: INC-2026-05-10-001",
+      "incident": "INCIDENT-POD-CRASHLOOP-001",
+      "events": [
+        {
+          "timestamp": "2026-05-10T16:45:00Z",
+          "event": "Pod enters CrashLoopBackOff state",
+          "actor": "Kubernetes"
+        },
+        {
+          "timestamp": "2026-05-10T16:45:30Z",
+          "event": "Prometheus alert fired",
+          "actor": "Prometheus"
+        },
+        {
+          "timestamp": "2026-05-10T16:46:00Z",
+          "event": "Alert received by pod-recovery-agent",
+          "actor": "pod-recovery-agent"
+        },
+        {
+          "timestamp": "2026-05-10T16:47:00Z",
+          "event": "Slack notification sent with approval buttons",
+          "actor": "pod-recovery-agent"
+        },
+        {
+          "timestamp": "2026-05-10T16:49:00Z",
+          "event": "Human approval received",
+          "actor": "user@example.com"
+        },
+        {
+          "timestamp": "2026-05-10T16:50:00Z",
+          "event": "Pod restart initiated",
+          "actor": "pod-recovery-agent"
+        },
+        {
+          "timestamp": "2026-05-10T16:52:00Z",
+          "event": "New pod running successfully",
+          "actor": "Kubernetes"
+        },
+        {
+          "timestamp": "2026-05-10T16:53:00Z",
+          "event": "Resolution confirmed in Slack",
+          "actor": "pod-recovery-agent"
+        },
+        {
+          "timestamp": "2026-05-10T17:00:00Z",
+          "event": "Postmortem created in Confluence",
+          "actor": "pod-recovery-agent"
+        }
+      ]
+    },
+    {
+      "@id": "INCIDENT-TYPE-CRASHLOOP",
+      "@type": "owl:Class",
+      "rdfs:label": "CrashLoopBackOff Incident",
+      "rdfs:subClassOf": "Incident",
+      "commonCauses": [
+        "Out of Memory",
+        "Application crash on startup",
+        "Missing configuration",
+        "Failed health checks"
+      ],
+      "standardResolution": "Restart pod after investigating logs"
+    },
+    {
+      "@id": "INCIDENT-TYPE-HIGH-CPU",
+      "@type": "owl:Class",
+      "rdfs:label": "High CPU Incident",
+      "rdfs:subClassOf": "Incident",
+      "commonCauses": [
+        "Infinite loop in code",
+        "High traffic load",
+        "Inefficient algorithm",
+        "Resource contention"
+      ],
+      "standardResolution": "Scale horizontally or optimize code"
+    },
+    {
+      "@id": "INCIDENT-TYPE-HIGH-MEMORY",
+      "@type": "owl:Class",
+      "rdfs:label": "High Memory Incident",
+      "rdfs:subClassOf": "Incident",
+      "commonCauses": [
+        "Memory leak",
+        "Large dataset in memory",
+        "Insufficient garbage collection",
+        "Memory limit too low"
+      ],
+      "standardResolution": "Increase memory limit or fix memory leak"
+    },
+    {
+      "@id": "INCIDENT-TYPE-POD-NOT-READY",
+      "@type": "owl:Class",
+      "rdfs:label": "Pod Not Ready Incident",
+      "rdfs:subClassOf": "Incident",
+      "commonCauses": [
+        "Failed readiness probe",
+        "Slow startup",
+        "Dependency unavailable",
+        "Network issues"
+      ],
+      "standardResolution": "Check logs and dependencies"
+    }
+  ]
+}

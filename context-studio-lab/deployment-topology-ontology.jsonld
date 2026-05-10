@@ -1,0 +1,542 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/deployment#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "k8s": "http://kubernetes.io/schema#"
+  },
+  "@graph": [
+    {
+      "@id": "HelmChart",
+      "@type": "owl:Class",
+      "rdfs:label": "Helm Chart",
+      "rdfs:comment": "Kubernetes application package"
+    },
+    {
+      "@id": "KubernetesResource",
+      "@type": "owl:Class",
+      "rdfs:label": "Kubernetes Resource",
+      "rdfs:comment": "Base class for all Kubernetes resources"
+    },
+    {
+      "@id": "Deployment",
+      "@type": "owl:Class",
+      "rdfs:label": "Deployment",
+      "rdfs:subClassOf": "KubernetesResource"
+    },
+    {
+      "@id": "StatefulSet",
+      "@type": "owl:Class",
+      "rdfs:label": "StatefulSet",
+      "rdfs:subClassOf": "KubernetesResource"
+    },
+    {
+      "@id": "DaemonSet",
+      "@type": "owl:Class",
+      "rdfs:label": "DaemonSet",
+      "rdfs:subClassOf": "KubernetesResource"
+    },
+    {
+      "@id": "Service",
+      "@type": "owl:Class",
+      "rdfs:label": "Service",
+      "rdfs:subClassOf": "KubernetesResource"
+    },
+    {
+      "@id": "ConfigMap",
+      "@type": "owl:Class",
+      "rdfs:label": "ConfigMap",
+      "rdfs:subClassOf": "KubernetesResource"
+    },
+    {
+      "@id": "Secret",
+      "@type": "owl:Class",
+      "rdfs:label": "Secret",
+      "rdfs:subClassOf": "KubernetesResource"
+    },
+    {
+      "@id": "PersistentVolumeClaim",
+      "@type": "owl:Class",
+      "rdfs:label": "PersistentVolumeClaim",
+      "rdfs:subClassOf": "KubernetesResource"
+    },
+    {
+      "@id": "ServiceAccount",
+      "@type": "owl:Class",
+      "rdfs:label": "ServiceAccount",
+      "rdfs:subClassOf": "KubernetesResource"
+    },
+    {
+      "@id": "Role",
+      "@type": "owl:Class",
+      "rdfs:label": "Role",
+      "rdfs:subClassOf": "KubernetesResource"
+    },
+    {
+      "@id": "RoleBinding",
+      "@type": "owl:Class",
+      "rdfs:label": "RoleBinding",
+      "rdfs:subClassOf": "KubernetesResource"
+    },
+    {
+      "@id": "ServiceMonitor",
+      "@type": "owl:Class",
+      "rdfs:label": "ServiceMonitor",
+      "rdfs:subClassOf": "KubernetesResource",
+      "rdfs:comment": "Prometheus Operator CRD for service monitoring"
+    },
+    {
+      "@id": "Route",
+      "@type": "owl:Class",
+      "rdfs:label": "Route",
+      "rdfs:subClassOf": "KubernetesResource",
+      "rdfs:comment": "OpenShift Route for external access"
+    },
+    {
+      "@id": "contains",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "contains",
+      "rdfs:domain": "HelmChart",
+      "rdfs:range": "KubernetesResource"
+    },
+    {
+      "@id": "manages",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "manages",
+      "rdfs:domain": ["Deployment", "StatefulSet", "DaemonSet"],
+      "rdfs:range": "Pod"
+    },
+    {
+      "@id": "mounts",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "mounts",
+      "rdfs:domain": ["Deployment", "StatefulSet"],
+      "rdfs:range": ["ConfigMap", "Secret", "PersistentVolumeClaim"]
+    },
+    {
+      "@id": "exposes",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "exposes",
+      "rdfs:domain": "Service",
+      "rdfs:range": ["Deployment", "StatefulSet"]
+    },
+    {
+      "@id": "monitors",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "monitors",
+      "rdfs:domain": "ServiceMonitor",
+      "rdfs:range": "Service"
+    },
+    {
+      "@id": "uses",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "uses",
+      "rdfs:domain": ["Deployment", "StatefulSet"],
+      "rdfs:range": "ServiceAccount"
+    },
+    {
+      "@id": "binds",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "binds",
+      "rdfs:domain": "RoleBinding",
+      "rdfs:range": ["ServiceAccount", "Role"]
+    },
+    {
+      "@id": "CHART-OBSERVABILITY-PROMETHEUS",
+      "@type": "HelmChart",
+      "rdfs:label": "Prometheus Chart",
+      "chartName": "prometheus",
+      "chartVersion": "1.0.0",
+      "namespace": "nilabja-haldar-dev",
+      "contains": [
+        "DEPLOY-PROMETHEUS-STATEFULSET",
+        "SVC-PROMETHEUS",
+        "CM-PROMETHEUS-CONFIG",
+        "PVC-PROMETHEUS-DATA",
+        "SM-PROMETHEUS"
+      ]
+    },
+    {
+      "@id": "DEPLOY-PROMETHEUS-STATEFULSET",
+      "@type": "StatefulSet",
+      "k8s:metadata": {
+        "name": "prometheus",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "k8s:spec": {
+        "replicas": 1,
+        "serviceName": "prometheus"
+      },
+      "manages": "POD-PROMETHEUS",
+      "mounts": ["CM-PROMETHEUS-CONFIG", "PVC-PROMETHEUS-DATA"],
+      "uses": "SA-PROMETHEUS"
+    },
+    {
+      "@id": "SVC-PROMETHEUS",
+      "@type": "Service",
+      "k8s:metadata": {
+        "name": "prometheus",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "k8s:spec": {
+        "type": "ClusterIP",
+        "port": 9090
+      },
+      "exposes": "DEPLOY-PROMETHEUS-STATEFULSET"
+    },
+    {
+      "@id": "CM-PROMETHEUS-CONFIG",
+      "@type": "ConfigMap",
+      "k8s:metadata": {
+        "name": "prometheus-config",
+        "namespace": "nilabja-haldar-dev"
+      }
+    },
+    {
+      "@id": "PVC-PROMETHEUS-DATA",
+      "@type": "PersistentVolumeClaim",
+      "k8s:metadata": {
+        "name": "prometheus-data",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "k8s:spec": {
+        "storageClassName": "efs-sc",
+        "storage": "10Gi"
+      }
+    },
+    {
+      "@id": "SM-PROMETHEUS",
+      "@type": "ServiceMonitor",
+      "k8s:metadata": {
+        "name": "prometheus",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "monitors": "SVC-PROMETHEUS"
+    },
+    {
+      "@id": "SA-PROMETHEUS",
+      "@type": "ServiceAccount",
+      "k8s:metadata": {
+        "name": "prometheus",
+        "namespace": "nilabja-haldar-dev"
+      }
+    },
+    {
+      "@id": "CHART-OBSERVABILITY-LOKI",
+      "@type": "HelmChart",
+      "rdfs:label": "Loki Chart",
+      "chartName": "loki",
+      "chartVersion": "1.0.0",
+      "namespace": "nilabja-haldar-dev",
+      "contains": [
+        "DEPLOY-LOKI-STATEFULSET",
+        "SVC-LOKI",
+        "CM-LOKI-CONFIG",
+        "PVC-LOKI-DATA"
+      ]
+    },
+    {
+      "@id": "DEPLOY-LOKI-STATEFULSET",
+      "@type": "StatefulSet",
+      "k8s:metadata": {
+        "name": "loki",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "k8s:spec": {
+        "replicas": 1,
+        "serviceName": "loki"
+      },
+      "mounts": ["CM-LOKI-CONFIG", "PVC-LOKI-DATA"]
+    },
+    {
+      "@id": "CHART-OBSERVABILITY-GRAFANA",
+      "@type": "HelmChart",
+      "rdfs:label": "Grafana Chart",
+      "chartName": "grafana",
+      "chartVersion": "1.0.0",
+      "namespace": "nilabja-haldar-dev",
+      "contains": [
+        "DEPLOY-GRAFANA",
+        "SVC-GRAFANA",
+        "CM-GRAFANA-DASHBOARDS"
+      ]
+    },
+    {
+      "@id": "DEPLOY-GRAFANA",
+      "@type": "Deployment",
+      "k8s:metadata": {
+        "name": "grafana",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "k8s:spec": {
+        "replicas": 1
+      },
+      "mounts": "CM-GRAFANA-DASHBOARDS"
+    },
+    {
+      "@id": "CHART-OBSERVABILITY-PROMTAIL",
+      "@type": "HelmChart",
+      "rdfs:label": "Promtail Chart",
+      "chartName": "promtail",
+      "chartVersion": "1.0.0",
+      "namespace": "nilabja-haldar-dev",
+      "contains": [
+        "DEPLOY-PROMTAIL-DAEMONSET",
+        "CM-PROMTAIL-CONFIG"
+      ]
+    },
+    {
+      "@id": "DEPLOY-PROMTAIL-DAEMONSET",
+      "@type": "DaemonSet",
+      "k8s:metadata": {
+        "name": "promtail",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "mounts": "CM-PROMTAIL-CONFIG"
+    },
+    {
+      "@id": "CHART-AI-SUPERVISOR-AGENT",
+      "@type": "HelmChart",
+      "rdfs:label": "Supervisor Agent Chart",
+      "chartName": "supervisor-agent",
+      "chartVersion": "1.0.0",
+      "namespace": "nilabja-haldar-dev",
+      "contains": [
+        "DEPLOY-SUPERVISOR-AGENT",
+        "SVC-SUPERVISOR-AGENT",
+        "CM-SUPERVISOR-CONFIG",
+        "SECRET-SUPERVISOR-API-KEYS",
+        "SA-SUPERVISOR-AGENT",
+        "ROLE-SUPERVISOR-AGENT",
+        "RB-SUPERVISOR-AGENT",
+        "ROUTE-SUPERVISOR-AGENT"
+      ]
+    },
+    {
+      "@id": "DEPLOY-SUPERVISOR-AGENT",
+      "@type": "Deployment",
+      "k8s:metadata": {
+        "name": "supervisor-agent",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "k8s:spec": {
+        "replicas": 1
+      },
+      "mounts": ["CM-SUPERVISOR-CONFIG", "SECRET-SUPERVISOR-API-KEYS"],
+      "uses": "SA-SUPERVISOR-AGENT"
+    },
+    {
+      "@id": "SA-SUPERVISOR-AGENT",
+      "@type": "ServiceAccount",
+      "k8s:metadata": {
+        "name": "supervisor-agent",
+        "namespace": "nilabja-haldar-dev"
+      }
+    },
+    {
+      "@id": "ROLE-SUPERVISOR-AGENT",
+      "@type": "Role",
+      "k8s:metadata": {
+        "name": "supervisor-agent",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "k8s:rules": [
+        {
+          "apiGroups": [""],
+          "resources": ["pods", "services"],
+          "verbs": ["get", "list", "watch"]
+        }
+      ]
+    },
+    {
+      "@id": "RB-SUPERVISOR-AGENT",
+      "@type": "RoleBinding",
+      "k8s:metadata": {
+        "name": "supervisor-agent",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "binds": ["SA-SUPERVISOR-AGENT", "ROLE-SUPERVISOR-AGENT"]
+    },
+    {
+      "@id": "ROUTE-SUPERVISOR-AGENT",
+      "@type": "Route",
+      "k8s:metadata": {
+        "name": "supervisor-agent",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "k8s:spec": {
+        "host": "supervisor-agent.apps.rosa.example.com",
+        "tls": {
+          "termination": "edge"
+        }
+      },
+      "exposes": "SVC-SUPERVISOR-AGENT"
+    },
+    {
+      "@id": "CHART-AI-POD-RECOVERY-AGENT",
+      "@type": "HelmChart",
+      "rdfs:label": "Pod Recovery Agent Chart",
+      "chartName": "pod-recovery-agent",
+      "chartVersion": "1.0.0",
+      "namespace": "nilabja-haldar-dev",
+      "contains": [
+        "DEPLOY-POD-RECOVERY-AGENT",
+        "SVC-POD-RECOVERY-AGENT",
+        "SA-POD-RECOVERY-AGENT",
+        "ROLE-POD-RECOVERY-AGENT",
+        "RB-POD-RECOVERY-AGENT"
+      ]
+    },
+    {
+      "@id": "ROLE-POD-RECOVERY-AGENT",
+      "@type": "Role",
+      "k8s:metadata": {
+        "name": "pod-recovery-agent",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "k8s:rules": [
+        {
+          "apiGroups": [""],
+          "resources": ["pods"],
+          "verbs": ["get", "list", "watch", "delete"]
+        },
+        {
+          "apiGroups": ["apps"],
+          "resources": ["deployments", "statefulsets"],
+          "verbs": ["get", "list", "patch"]
+        }
+      ]
+    },
+    {
+      "@id": "CHART-ECOMMERCE-BACKEND",
+      "@type": "HelmChart",
+      "rdfs:label": "Backend Chart",
+      "chartName": "backend",
+      "chartVersion": "1.0.0",
+      "namespace": "nilabja-haldar-dev",
+      "contains": [
+        "DEPLOY-BACKEND",
+        "SVC-BACKEND",
+        "CM-BACKEND-CONFIG",
+        "SM-BACKEND"
+      ]
+    },
+    {
+      "@id": "DEPLOY-BACKEND",
+      "@type": "Deployment",
+      "k8s:metadata": {
+        "name": "backend",
+        "namespace": "nilabja-haldar-dev",
+        "labels": {
+          "app": "backend",
+          "tier": "application"
+        }
+      },
+      "k8s:spec": {
+        "replicas": 2,
+        "selector": {
+          "matchLabels": {
+            "app": "backend"
+          }
+        },
+        "template": {
+          "spec": {
+            "containers": [
+              {
+                "name": "backend",
+                "image": "backend:latest",
+                "ports": [{"containerPort": 8000}],
+                "env": [
+                  {"name": "DATABASE_URL", "valueFrom": {"secretKeyRef": {"name": "postgresql-secret", "key": "url"}}}
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "mounts": "CM-BACKEND-CONFIG"
+    },
+    {
+      "@id": "SM-BACKEND",
+      "@type": "ServiceMonitor",
+      "k8s:metadata": {
+        "name": "backend",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "k8s:spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "backend"
+          }
+        },
+        "endpoints": [
+          {
+            "port": "http",
+            "path": "/metrics"
+          }
+        ]
+      },
+      "monitors": "SVC-BACKEND"
+    },
+    {
+      "@id": "CHART-DATA-POSTGRESQL",
+      "@type": "HelmChart",
+      "rdfs:label": "PostgreSQL Chart",
+      "chartName": "postgresql",
+      "chartVersion": "1.0.0",
+      "namespace": "nilabja-haldar-dev",
+      "contains": [
+        "DEPLOY-POSTGRESQL-STATEFULSET",
+        "SVC-POSTGRESQL",
+        "SECRET-POSTGRESQL",
+        "PVC-POSTGRESQL-DATA"
+      ]
+    },
+    {
+      "@id": "DEPLOY-POSTGRESQL-STATEFULSET",
+      "@type": "StatefulSet",
+      "k8s:metadata": {
+        "name": "postgresql",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "k8s:spec": {
+        "replicas": 1,
+        "serviceName": "postgresql"
+      },
+      "mounts": ["SECRET-POSTGRESQL", "PVC-POSTGRESQL-DATA"]
+    },
+    {
+      "@id": "PVC-POSTGRESQL-DATA",
+      "@type": "PersistentVolumeClaim",
+      "k8s:metadata": {
+        "name": "postgresql-data",
+        "namespace": "nilabja-haldar-dev"
+      },
+      "k8s:spec": {
+        "storageClassName": "efs-sc",
+        "accessModes": ["ReadWriteOnce"],
+        "resources": {
+          "requests": {
+            "storage": "10Gi"
+          }
+        }
+      }
+    },
+    {
+      "@id": "CHART-BACKUP-VELERO",
+      "@type": "HelmChart",
+      "rdfs:label": "Velero Chart",
+      "chartName": "velero",
+      "chartVersion": "1.0.0",
+      "namespace": "nilabja-haldar-dev",
+      "contains": [
+        "DEPLOY-VELERO",
+        "SVC-VELERO",
+        "CM-VELERO-CONFIG",
+        "SECRET-VELERO-CREDENTIALS"
+      ]
+    }
+  ]
+}

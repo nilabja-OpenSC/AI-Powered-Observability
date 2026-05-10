@@ -1,0 +1,77 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/compliance#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "ComplianceStandard",
+      "@type": "owl:Class",
+      "rdfs:label": "Compliance Standard",
+      "rdfs:comment": "Compliance standard or framework"
+    },
+    {
+      "@id": "Control",
+      "@type": "owl:Class",
+      "rdfs:label": "Control",
+      "rdfs:comment": "Compliance control"
+    },
+    {
+      "@id": "AuditLog",
+      "@type": "owl:Class",
+      "rdfs:label": "Audit Log",
+      "rdfs:comment": "Audit trail entry"
+    },
+    {
+      "@id": "Certification",
+      "@type": "owl:Class",
+      "rdfs:label": "Certification",
+      "rdfs:comment": "Compliance certification"
+    },
+    {
+      "@id": "STANDARD-SOC2",
+      "@type": "ComplianceStandard",
+      "rdfs:label": "SOC 2",
+      "standardName": "SOC 2 Type II",
+      "controls": ["CONTROL-ACCESS", "CONTROL-ENCRYPTION", "CONTROL-LOGGING"]
+    },
+    {
+      "@id": "CONTROL-ACCESS",
+      "@type": "Control",
+      "rdfs:label": "Access Control",
+      "controlId": "AC-001",
+      "description": "Implement role-based access control",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "@id": "CONTROL-ENCRYPTION",
+      "@type": "Control",
+      "rdfs:label": "Data Encryption",
+      "controlId": "ENC-001",
+      "description": "Encrypt data at rest and in transit",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "@id": "CONTROL-LOGGING",
+      "@type": "Control",
+      "rdfs:label": "Audit Logging",
+      "controlId": "LOG-001",
+      "description": "Maintain comprehensive audit logs",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "@id": "AUDIT-LOG-001",
+      "@type": "AuditLog",
+      "rdfs:label": "Pod Restart Audit",
+      "timestamp": "2026-05-10T16:50:00Z",
+      "actor": "pod-recovery-agent",
+      "action": "kubectl delete pod",
+      "resource": "backend-7d8f9c5b6-abc12",
+      "namespace": "nilabja-haldar-dev",
+      "approved_by": "user@example.com"
+    }
+  ]
+}

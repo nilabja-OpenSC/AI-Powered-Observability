@@ -1,0 +1,370 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/architecture#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "dcterms": "http://purl.org/dc/terms/"
+  },
+  "@graph": [
+    {
+      "@id": "Component",
+      "@type": "owl:Class",
+      "rdfs:label": "Component",
+      "rdfs:comment": "Base class for all system components"
+    },
+    {
+      "@id": "ApplicationComponent",
+      "@type": "owl:Class",
+      "rdfs:label": "Application Component",
+      "rdfs:subClassOf": "Component"
+    },
+    {
+      "@id": "InfrastructureComponent",
+      "@type": "owl:Class",
+      "rdfs:label": "Infrastructure Component",
+      "rdfs:subClassOf": "Component"
+    },
+    {
+      "@id": "DataStore",
+      "@type": "owl:Class",
+      "rdfs:label": "Data Store",
+      "rdfs:subClassOf": "Component"
+    },
+    {
+      "@id": "CommunicationChannel",
+      "@type": "owl:Class",
+      "rdfs:label": "Communication Channel",
+      "rdfs:comment": "Mechanism for inter-component communication"
+    },
+    {
+      "@id": "dependsOn",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "depends on",
+      "rdfs:domain": "Component",
+      "rdfs:range": "Component"
+    },
+    {
+      "@id": "communicatesWith",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "communicates with",
+      "rdfs:domain": "Component",
+      "rdfs:range": "Component"
+    },
+    {
+      "@id": "deploysTo",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "deploys to",
+      "rdfs:domain": "ApplicationComponent",
+      "rdfs:range": "InfrastructureComponent"
+    },
+    {
+      "@id": "stores",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "stores",
+      "rdfs:domain": "Component",
+      "rdfs:range": "DataStore"
+    },
+    {
+      "@id": "monitors",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "monitors",
+      "rdfs:domain": "Component",
+      "rdfs:range": "Component"
+    },
+    {
+      "@id": "exposes",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "exposes",
+      "rdfs:domain": "Component",
+      "rdfs:range": "CommunicationChannel"
+    },
+    {
+      "@id": "COMP-BACKEND",
+      "@type": "ApplicationComponent",
+      "rdfs:label": "Backend API",
+      "description": "FastAPI backend service for e-commerce application",
+      "technology": "Python 3.11, FastAPI",
+      "port": 8000,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "stores": "DATA-POSTGRESQL",
+      "exposes": "COMM-REST-API",
+      "communicatesWith": ["COMP-FRONTEND", "COMP-CHAT-UI"]
+    },
+    {
+      "@id": "COMP-FRONTEND",
+      "@type": "ApplicationComponent",
+      "rdfs:label": "Frontend UI",
+      "description": "Next.js frontend for e-commerce application",
+      "technology": "Next.js, React, TypeScript",
+      "port": 3000,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "communicatesWith": "COMP-BACKEND",
+      "exposes": "COMM-HTTP"
+    },
+    {
+      "@id": "COMP-CHAT-UI",
+      "@type": "ApplicationComponent",
+      "rdfs:label": "Chat UI",
+      "description": "Vite-based chat interface for observability queries",
+      "technology": "Vite, React, TypeScript, TailwindCSS",
+      "port": 5173,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "communicatesWith": ["COMP-SUPERVISOR-AGENT", "COMP-BACKEND"],
+      "exposes": "COMM-WEBSOCKET"
+    },
+    {
+      "@id": "COMP-SUPERVISOR-AGENT",
+      "@type": "ApplicationComponent",
+      "rdfs:label": "Supervisor Agent",
+      "description": "AI agent that routes queries to specialist agents",
+      "technology": "Python, LangChain, OpenAI GPT-4",
+      "port": 8001,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "stores": "DATA-CHROMA",
+      "communicatesWith": ["COMP-OBSERVABILITY-AGENT", "COMP-POD-RECOVERY-AGENT", "COMP-BACKUP-RESTORE-AGENT"],
+      "exposes": "COMM-REST-API"
+    },
+    {
+      "@id": "COMP-OBSERVABILITY-AGENT",
+      "@type": "ApplicationComponent",
+      "rdfs:label": "Observability Agent",
+      "description": "AI agent for querying Prometheus, Grafana, Loki",
+      "technology": "Python, LangChain, OpenAI GPT-4",
+      "port": 8002,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "stores": "DATA-CHROMA",
+      "communicatesWith": ["COMP-PROMETHEUS", "COMP-LOKI", "COMP-GRAFANA"],
+      "exposes": "COMM-REST-API"
+    },
+    {
+      "@id": "COMP-POD-RECOVERY-AGENT",
+      "@type": "ApplicationComponent",
+      "rdfs:label": "Pod Recovery Agent",
+      "description": "AI agent for detecting and recovering failed pods",
+      "technology": "Python, LangChain, OpenAI GPT-4",
+      "port": 8003,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "stores": "DATA-CHROMA",
+      "communicatesWith": ["INFRA-K8S-API", "COMP-SLACK", "COMP-PROMETHEUS"],
+      "exposes": "COMM-REST-API"
+    },
+    {
+      "@id": "COMP-BACKUP-RESTORE-AGENT",
+      "@type": "ApplicationComponent",
+      "rdfs:label": "Backup/Restore Agent",
+      "description": "AI agent for managing backups and restores",
+      "technology": "Python, LangChain, OpenAI GPT-4",
+      "port": 8004,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "communicatesWith": ["COMP-VELERO", "COMP-ARGO-WORKFLOWS"],
+      "exposes": "COMM-REST-API"
+    },
+    {
+      "@id": "COMP-PROMETHEUS",
+      "@type": "InfrastructureComponent",
+      "rdfs:label": "Prometheus",
+      "description": "Metrics collection and storage (6h retention)",
+      "technology": "Prometheus 2.45",
+      "port": 9090,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "stores": "DATA-PROMETHEUS-TSDB",
+      "monitors": ["COMP-BACKEND", "COMP-FRONTEND", "COMP-CHAT-UI", "COMP-SUPERVISOR-AGENT"],
+      "exposes": "COMM-PROMQL-API"
+    },
+    {
+      "@id": "COMP-THANOS",
+      "@type": "InfrastructureComponent",
+      "rdfs:label": "Thanos",
+      "description": "Long-term metrics storage (30d retention)",
+      "technology": "Thanos",
+      "port": 10902,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "stores": "DATA-S3-BUCKET",
+      "dependsOn": "COMP-PROMETHEUS",
+      "exposes": "COMM-PROMQL-API"
+    },
+    {
+      "@id": "COMP-LOKI",
+      "@type": "InfrastructureComponent",
+      "rdfs:label": "Loki",
+      "description": "Log aggregation and storage",
+      "technology": "Loki 2.8",
+      "port": 3100,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "stores": "DATA-LOKI-STORAGE",
+      "exposes": "COMM-LOGQL-API"
+    },
+    {
+      "@id": "COMP-PROMTAIL",
+      "@type": "InfrastructureComponent",
+      "rdfs:label": "Promtail",
+      "description": "Log collection agent (DaemonSet)",
+      "technology": "Promtail 2.8",
+      "port": 9080,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "communicatesWith": "COMP-LOKI"
+    },
+    {
+      "@id": "COMP-GRAFANA",
+      "@type": "InfrastructureComponent",
+      "rdfs:label": "Grafana",
+      "description": "Visualization and dashboards",
+      "technology": "Grafana 10.0",
+      "port": 3000,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "communicatesWith": ["COMP-PROMETHEUS", "COMP-LOKI", "COMP-THANOS"],
+      "exposes": "COMM-HTTP"
+    },
+    {
+      "@id": "COMP-ALERTMANAGER",
+      "@type": "InfrastructureComponent",
+      "rdfs:label": "Alertmanager",
+      "description": "Alert routing and notification",
+      "technology": "Alertmanager 0.26",
+      "port": 9093,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "dependsOn": "COMP-PROMETHEUS",
+      "communicatesWith": "COMP-SLACK",
+      "exposes": "COMM-REST-API"
+    },
+    {
+      "@id": "COMP-VELERO",
+      "@type": "InfrastructureComponent",
+      "rdfs:label": "Velero",
+      "description": "Kubernetes backup and restore",
+      "technology": "Velero 1.11",
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "stores": "DATA-S3-BUCKET",
+      "exposes": "COMM-REST-API"
+    },
+    {
+      "@id": "COMP-ARGO-WORKFLOWS",
+      "@type": "InfrastructureComponent",
+      "rdfs:label": "Argo Workflows",
+      "description": "Workflow orchestration for backup/restore",
+      "technology": "Argo Workflows 3.4",
+      "port": 2746,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "exposes": "COMM-REST-API"
+    },
+    {
+      "@id": "COMP-SLACK",
+      "@type": "ApplicationComponent",
+      "rdfs:label": "Slack Integration",
+      "description": "Slack workspace for notifications and approvals",
+      "technology": "Slack API, Webhooks",
+      "exposes": "COMM-WEBHOOK"
+    },
+    {
+      "@id": "COMP-CONFLUENCE",
+      "@type": "ApplicationComponent",
+      "rdfs:label": "Confluence Integration",
+      "description": "Confluence for incident documentation",
+      "technology": "Confluence Cloud API",
+      "exposes": "COMM-REST-API"
+    },
+    {
+      "@id": "DATA-POSTGRESQL",
+      "@type": "DataStore",
+      "rdfs:label": "PostgreSQL Database",
+      "description": "Primary database for application data",
+      "technology": "PostgreSQL 15",
+      "port": 5432,
+      "deploysTo": "INFRA-K8S-NAMESPACE",
+      "storageType": "Persistent Volume (EFS CSI, 10GB)"
+    },
+    {
+      "@id": "DATA-CHROMA",
+      "@type": "DataStore",
+      "rdfs:label": "Chroma Vector Store",
+      "description": "Vector database for agent memory",
+      "technology": "Chroma",
+      "storageType": "Persistent Volume"
+    },
+    {
+      "@id": "DATA-PROMETHEUS-TSDB",
+      "@type": "DataStore",
+      "rdfs:label": "Prometheus TSDB",
+      "description": "Time series database for metrics (6h retention)",
+      "technology": "Prometheus TSDB",
+      "storageType": "Persistent Volume"
+    },
+    {
+      "@id": "DATA-LOKI-STORAGE",
+      "@type": "DataStore",
+      "rdfs:label": "Loki Storage",
+      "description": "Log storage backend",
+      "technology": "Filesystem",
+      "storageType": "Persistent Volume"
+    },
+    {
+      "@id": "DATA-S3-BUCKET",
+      "@type": "DataStore",
+      "rdfs:label": "S3 Bucket",
+      "description": "Object storage for Thanos and Velero",
+      "technology": "AWS S3 / MinIO",
+      "storageType": "Object Storage"
+    },
+    {
+      "@id": "INFRA-K8S-NAMESPACE",
+      "@type": "InfrastructureComponent",
+      "rdfs:label": "Kubernetes Namespace",
+      "description": "nilabja-haldar-dev namespace on OpenShift ROSA",
+      "technology": "Kubernetes 1.27, OpenShift ROSA",
+      "namespace": "nilabja-haldar-dev"
+    },
+    {
+      "@id": "INFRA-K8S-API",
+      "@type": "InfrastructureComponent",
+      "rdfs:label": "Kubernetes API Server",
+      "description": "Kubernetes control plane API",
+      "technology": "Kubernetes API",
+      "port": 6443,
+      "exposes": "COMM-REST-API"
+    },
+    {
+      "@id": "COMM-REST-API",
+      "@type": "CommunicationChannel",
+      "rdfs:label": "REST API",
+      "protocol": "HTTP/HTTPS",
+      "format": "JSON"
+    },
+    {
+      "@id": "COMM-PROMQL-API",
+      "@type": "CommunicationChannel",
+      "rdfs:label": "PromQL API",
+      "protocol": "HTTP",
+      "format": "PromQL Query Language"
+    },
+    {
+      "@id": "COMM-LOGQL-API",
+      "@type": "CommunicationChannel",
+      "rdfs:label": "LogQL API",
+      "protocol": "HTTP",
+      "format": "LogQL Query Language"
+    },
+    {
+      "@id": "COMM-WEBSOCKET",
+      "@type": "CommunicationChannel",
+      "rdfs:label": "WebSocket",
+      "protocol": "WebSocket",
+      "format": "JSON"
+    },
+    {
+      "@id": "COMM-WEBHOOK",
+      "@type": "CommunicationChannel",
+      "rdfs:label": "Webhook",
+      "protocol": "HTTPS",
+      "format": "JSON"
+    },
+    {
+      "@id": "COMM-HTTP",
+      "@type": "CommunicationChannel",
+      "rdfs:label": "HTTP",
+      "protocol": "HTTP/HTTPS",
+      "format": "HTML/JSON"
+    }
+  ]
+}

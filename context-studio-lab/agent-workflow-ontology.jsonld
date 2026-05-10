@@ -1,0 +1,439 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/workflows#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "Workflow",
+      "@type": "owl:Class",
+      "rdfs:label": "Workflow",
+      "rdfs:comment": "Sequence of steps to accomplish a task"
+    },
+    {
+      "@id": "WorkflowStep",
+      "@type": "owl:Class",
+      "rdfs:label": "Workflow Step",
+      "rdfs:comment": "Individual step in workflow"
+    },
+    {
+      "@id": "DecisionPoint",
+      "@type": "owl:Class",
+      "rdfs:label": "Decision Point",
+      "rdfs:comment": "Point where workflow branches based on condition"
+    },
+    {
+      "@id": "ApprovalFlow",
+      "@type": "owl:Class",
+      "rdfs:label": "Approval Flow",
+      "rdfs:comment": "Human-in-the-loop approval workflow"
+    },
+    {
+      "@id": "WorkflowState",
+      "@type": "owl:Class",
+      "rdfs:label": "Workflow State",
+      "rdfs:comment": "Current state of workflow execution"
+    },
+    {
+      "@id": "Transition",
+      "@type": "owl:Class",
+      "rdfs:label": "Transition",
+      "rdfs:comment": "Movement between workflow states"
+    },
+    {
+      "@id": "triggers",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "triggers",
+      "rdfs:domain": "WorkflowStep",
+      "rdfs:range": "Workflow"
+    },
+    {
+      "@id": "transitions",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "transitions",
+      "rdfs:domain": "WorkflowState",
+      "rdfs:range": "WorkflowState"
+    },
+    {
+      "@id": "requires",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "requires",
+      "rdfs:domain": "WorkflowStep",
+      "rdfs:range": "ApprovalFlow"
+    },
+    {
+      "@id": "completes",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "completes",
+      "rdfs:domain": "WorkflowStep",
+      "rdfs:range": "Workflow"
+    },
+    {
+      "@id": "WORKFLOW-QUERY",
+      "@type": "Workflow",
+      "rdfs:label": "Observability Query Workflow",
+      "description": "User queries observability data via Chat UI",
+      "steps": [
+        "STEP-RECEIVE-QUERY",
+        "STEP-CLASSIFY-INTENT",
+        "STEP-ROUTE-TO-AGENT",
+        "STEP-EXECUTE-QUERY",
+        "STEP-FORMAT-RESPONSE",
+        "STEP-RETURN-RESULT"
+      ],
+      "executionMode": "synchronous",
+      "approvalRequired": false
+    },
+    {
+      "@id": "WORKFLOW-POD-RECOVERY",
+      "@type": "Workflow",
+      "rdfs:label": "Pod Recovery Workflow",
+      "description": "Detect and recover failed pods with human approval",
+      "steps": [
+        "STEP-DETECT-FAILURE",
+        "STEP-ANALYZE-LOGS",
+        "STEP-GENERATE-RESOLUTION",
+        "STEP-REQUEST-APPROVAL",
+        "STEP-WAIT-APPROVAL",
+        "STEP-EXECUTE-RECOVERY",
+        "STEP-VERIFY-RECOVERY",
+        "STEP-DOCUMENT-INCIDENT"
+      ],
+      "executionMode": "asynchronous",
+      "approvalRequired": true,
+      "approvalTimeout": 300
+    },
+    {
+      "@id": "WORKFLOW-BACKUP",
+      "@type": "Workflow",
+      "rdfs:label": "Backup Workflow",
+      "description": "Create backup using Velero",
+      "steps": [
+        "STEP-VALIDATE-RESOURCES",
+        "STEP-CREATE-BACKUP",
+        "STEP-WAIT-COMPLETION",
+        "STEP-VERIFY-BACKUP",
+        "STEP-NOTIFY-SUCCESS"
+      ],
+      "executionMode": "asynchronous",
+      "approvalRequired": false
+    },
+    {
+      "@id": "STEP-RECEIVE-QUERY",
+      "@type": "WorkflowStep",
+      "rdfs:label": "Receive Query",
+      "stepNumber": 1,
+      "action": "Receive user query from Chat UI",
+      "inputs": ["user_query", "session_id"],
+      "outputs": ["query_text", "user_context"]
+    },
+    {
+      "@id": "STEP-CLASSIFY-INTENT",
+      "@type": "WorkflowStep",
+      "rdfs:label": "Classify Intent",
+      "stepNumber": 2,
+      "action": "Use LLM to classify query intent",
+      "inputs": ["query_text"],
+      "outputs": ["intent", "confidence"],
+      "tool": "intent_classifier"
+    },
+    {
+      "@id": "STEP-ROUTE-TO-AGENT",
+      "@type": "WorkflowStep",
+      "rdfs:label": "Route to Agent",
+      "stepNumber": 3,
+      "action": "Route query to appropriate specialist agent",
+      "inputs": ["intent", "query_text"],
+      "outputs": ["target_agent"],
+      "decisionPoint": "DECISION-AGENT-ROUTING"
+    },
+    {
+      "@id": "STEP-EXECUTE-QUERY",
+      "@type": "WorkflowStep",
+      "rdfs:label": "Execute Query",
+      "stepNumber": 4,
+      "action": "Execute PromQL/LogQL query",
+      "inputs": ["query", "time_range"],
+      "outputs": ["query_results"],
+      "tool": "prometheus_query"
+    },
+    {
+      "@id": "STEP-FORMAT-RESPONSE",
+      "@type": "WorkflowStep",
+      "rdfs:label": "Format Response",
+      "stepNumber": 5,
+      "action": "Format results for user display",
+      "inputs": ["query_results"],
+      "outputs": ["formatted_response"]
+    },
+    {
+      "@id": "STEP-RETURN-RESULT",
+      "@type": "WorkflowStep",
+      "rdfs:label": "Return Result",
+      "stepNumber": 6,
+      "action": "Send response to Chat UI",
+      "inputs": ["formatted_response"],
+      "outputs": ["response_sent"],
+      "completes": "WORKFLOW-QUERY"
+    },
+    {
+      "@id": "STEP-DETECT-FAILURE",
+      "@type": "WorkflowStep",
+      "rdfs:label": "Detect Failure",
+      "stepNumber": 1,
+      "action": "Detect pod in CrashLoopBackOff state",
+      "inputs": ["prometheus_alert"],
+      "outputs": ["failed_pod", "failure_reason"],
+      "tool": "kubectl_get"
+    },
+    {
+      "@id": "STEP-ANALYZE-LOGS",
+      "@type": "WorkflowStep",
+      "rdfs:label": "Analyze Logs",
+      "stepNumber": 2,
+      "action": "Retrieve and analyze pod logs",
+      "inputs": ["failed_pod"],
+      "outputs": ["log_analysis", "root_cause"],
+      "tool": "loki_query"
+    },
+    {
+      "@id": "STEP-GENERATE-RESOLUTION",
+      "@type": "WorkflowStep",
+      "rdfs:label": "Generate Resolution",
+      "stepNumber": 3,
+      "action": "Generate resolution steps using LLM",
+      "inputs": ["root_cause", "log_analysis"],
+      "outputs": ["resolution_steps"]
+    },
+    {
+      "@id": "STEP-REQUEST-APPROVAL",
+      "@type": "WorkflowStep",
+      "rdfs:label": "Request Approval",
+      "stepNumber": 4,
+      "action": "Send Slack notification with approve/deny buttons",
+      "inputs": ["failed_pod", "resolution_steps"],
+      "outputs": ["approval_request_id"],
+      "tool": "slack_approval",
+      "requires": "APPROVAL-FLOW-POD-RESTART"
+    },
+    {
+      "@id": "STEP-WAIT-APPROVAL",
+      "@type": "WorkflowStep",
+      "rdfs:label": "Wait for Approval",
+      "stepNumber": 5,
+      "action": "Wait for human decision (5 min timeout)",
+      "inputs": ["approval_request_id"],
+      "outputs": ["approval_decision"],
+      "timeout": 300,
+      "defaultAction": "DENY",
+      "decisionPoint": "DECISION-APPROVAL"
+    },
+    {
+      "@id": "STEP-EXECUTE-RECOVERY",
+      "@type": "WorkflowStep",
+      "rdfs:label": "Execute Recovery",
+      "stepNumber": 6,
+      "action": "Restart pod (if approved)",
+      "inputs": ["failed_pod", "approval_decision"],
+      "outputs": ["recovery_result"],
+      "tool": "kubectl_delete",
+      "condition": "approval_decision == APPROVED"
+    },
+    {
+      "@id": "STEP-VERIFY-RECOVERY",
+      "@type": "WorkflowStep",
+      "rdfs:label": "Verify Recovery",
+      "stepNumber": 7,
+      "action": "Verify new pod is running",
+      "inputs": ["failed_pod"],
+      "outputs": ["verification_result"],
+      "tool": "kubectl_get"
+    },
+    {
+      "@id": "STEP-DOCUMENT-INCIDENT",
+      "@type": "WorkflowStep",
+      "rdfs:label": "Document Incident",
+      "stepNumber": 8,
+      "action": "Create Confluence page with incident details",
+      "inputs": ["failed_pod", "root_cause", "resolution_steps", "recovery_result"],
+      "outputs": ["confluence_page_url"],
+      "tool": "confluence_create",
+      "completes": "WORKFLOW-POD-RECOVERY"
+    },
+    {
+      "@id": "DECISION-AGENT-ROUTING",
+      "@type": "DecisionPoint",
+      "rdfs:label": "Agent Routing Decision",
+      "description": "Route query to appropriate agent based on intent",
+      "conditions": [
+        {
+          "if": "intent == 'observability'",
+          "then": "route_to(ObservabilityAgent)"
+        },
+        {
+          "if": "intent == 'pod_recovery'",
+          "then": "route_to(PodRecoveryAgent)"
+        },
+        {
+          "if": "intent == 'backup_restore'",
+          "then": "route_to(BackupRestoreAgent)"
+        },
+        {
+          "else": "route_to(SupervisorAgent)"
+        }
+      ]
+    },
+    {
+      "@id": "DECISION-APPROVAL",
+      "@type": "DecisionPoint",
+      "rdfs:label": "Approval Decision",
+      "description": "Branch based on approval decision",
+      "conditions": [
+        {
+          "if": "approval_decision == 'APPROVED'",
+          "then": "execute_recovery()"
+        },
+        {
+          "if": "approval_decision == 'DENIED'",
+          "then": "send_manual_steps()"
+        },
+        {
+          "if": "approval_decision == 'TIMEOUT'",
+          "then": "default_to_deny()"
+        }
+      ]
+    },
+    {
+      "@id": "APPROVAL-FLOW-POD-RESTART",
+      "@type": "ApprovalFlow",
+      "rdfs:label": "Pod Restart Approval",
+      "description": "Human approval required for pod restart",
+      "approvers": ["platform-team", "on-call-engineer"],
+      "channel": "slack",
+      "timeout": 300,
+      "defaultAction": "DENY",
+      "notificationTemplate": {
+        "title": "Pod Restart Approval Required",
+        "fields": [
+          "Pod Name",
+          "Namespace",
+          "Failure Reason",
+          "Resolution Steps"
+        ],
+        "actions": [
+          {"label": "Approve", "style": "primary", "value": "APPROVED"},
+          {"label": "Deny", "style": "danger", "value": "DENIED"}
+        ]
+      }
+    },
+    {
+      "@id": "STATE-PENDING",
+      "@type": "WorkflowState",
+      "rdfs:label": "Pending",
+      "description": "Workflow not yet started"
+    },
+    {
+      "@id": "STATE-RUNNING",
+      "@type": "WorkflowState",
+      "rdfs:label": "Running",
+      "description": "Workflow currently executing"
+    },
+    {
+      "@id": "STATE-WAITING-APPROVAL",
+      "@type": "WorkflowState",
+      "rdfs:label": "Waiting for Approval",
+      "description": "Workflow paused pending human approval"
+    },
+    {
+      "@id": "STATE-COMPLETED",
+      "@type": "WorkflowState",
+      "rdfs:label": "Completed",
+      "description": "Workflow completed successfully"
+    },
+    {
+      "@id": "STATE-FAILED",
+      "@type": "WorkflowState",
+      "rdfs:label": "Failed",
+      "description": "Workflow failed with error"
+    },
+    {
+      "@id": "STATE-CANCELLED",
+      "@type": "WorkflowState",
+      "rdfs:label": "Cancelled",
+      "description": "Workflow cancelled by user or timeout"
+    },
+    {
+      "@id": "TRANSITION-START",
+      "@type": "Transition",
+      "rdfs:label": "Start Workflow",
+      "from": "STATE-PENDING",
+      "to": "STATE-RUNNING",
+      "trigger": "workflow_triggered"
+    },
+    {
+      "@id": "TRANSITION-REQUEST-APPROVAL",
+      "@type": "Transition",
+      "rdfs:label": "Request Approval",
+      "from": "STATE-RUNNING",
+      "to": "STATE-WAITING-APPROVAL",
+      "trigger": "approval_required"
+    },
+    {
+      "@id": "TRANSITION-APPROVE",
+      "@type": "Transition",
+      "rdfs:label": "Approval Granted",
+      "from": "STATE-WAITING-APPROVAL",
+      "to": "STATE-RUNNING",
+      "trigger": "approval_granted"
+    },
+    {
+      "@id": "TRANSITION-DENY",
+      "@type": "Transition",
+      "rdfs:label": "Approval Denied",
+      "from": "STATE-WAITING-APPROVAL",
+      "to": "STATE-CANCELLED",
+      "trigger": "approval_denied"
+    },
+    {
+      "@id": "TRANSITION-TIMEOUT",
+      "@type": "Transition",
+      "rdfs:label": "Approval Timeout",
+      "from": "STATE-WAITING-APPROVAL",
+      "to": "STATE-CANCELLED",
+      "trigger": "approval_timeout"
+    },
+    {
+      "@id": "TRANSITION-COMPLETE",
+      "@type": "Transition",
+      "rdfs:label": "Complete Workflow",
+      "from": "STATE-RUNNING",
+      "to": "STATE-COMPLETED",
+      "trigger": "workflow_completed"
+    },
+    {
+      "@id": "TRANSITION-FAIL",
+      "@type": "Transition",
+      "rdfs:label": "Workflow Failed",
+      "from": "STATE-RUNNING",
+      "to": "STATE-FAILED",
+      "trigger": "workflow_error"
+    },
+    {
+      "@id": "WORKFLOW-EXECUTION-001",
+      "@type": "owl:Class",
+      "rdfs:label": "Workflow Execution Example",
+      "executionId": "exec-2026-05-10-001",
+      "workflow": "WORKFLOW-POD-RECOVERY",
+      "state": "STATE-COMPLETED",
+      "startedAt": "2026-05-10T16:45:00Z",
+      "completedAt": "2026-05-10T17:00:00Z",
+      "duration": 900,
+      "steps_executed": 8,
+      "approval_received": true,
+      "result": "success"
+    }
+  ]
+}

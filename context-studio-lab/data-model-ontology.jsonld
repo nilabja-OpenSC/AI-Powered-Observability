@@ -1,0 +1,59 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/data#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "Entity",
+      "@type": "owl:Class",
+      "rdfs:label": "Entity",
+      "rdfs:comment": "Base data entity"
+    },
+    {
+      "@id": "User",
+      "@type": "owl:Class",
+      "rdfs:label": "User",
+      "rdfs:subClassOf": "Entity",
+      "attributes": ["id", "email", "name", "role"]
+    },
+    {
+      "@id": "Product",
+      "@type": "owl:Class",
+      "rdfs:label": "Product",
+      "rdfs:subClassOf": "Entity",
+      "attributes": ["id", "name", "price", "inventory"]
+    },
+    {
+      "@id": "Order",
+      "@type": "owl:Class",
+      "rdfs:label": "Order",
+      "rdfs:subClassOf": "Entity",
+      "attributes": ["id", "userId", "items", "total", "status"]
+    },
+    {
+      "@id": "Metric",
+      "@type": "owl:Class",
+      "rdfs:label": "Metric",
+      "rdfs:subClassOf": "Entity",
+      "attributes": ["name", "value", "timestamp", "labels"]
+    },
+    {
+      "@id": "LogEntry",
+      "@type": "owl:Class",
+      "rdfs:label": "Log Entry",
+      "rdfs:subClassOf": "Entity",
+      "attributes": ["timestamp", "level", "message", "labels"]
+    },
+    {
+      "@id": "Alert",
+      "@type": "owl:Class",
+      "rdfs:label": "Alert",
+      "rdfs:subClassOf": "Entity",
+      "attributes": ["name", "severity", "status", "firedAt"]
+    }
+  ]
+}

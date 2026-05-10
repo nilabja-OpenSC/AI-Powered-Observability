@@ -1,0 +1,75 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/users#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "User",
+      "@type": "owl:Class",
+      "rdfs:label": "User",
+      "rdfs:comment": "System user"
+    },
+    {
+      "@id": "Team",
+      "@type": "owl:Class",
+      "rdfs:label": "Team",
+      "rdfs:comment": "User team"
+    },
+    {
+      "@id": "Role",
+      "@type": "owl:Class",
+      "rdfs:label": "Role",
+      "rdfs:comment": "User role"
+    },
+    {
+      "@id": "USER-ADMIN",
+      "@type": "User",
+      "rdfs:label": "Admin User",
+      "username": "admin",
+      "email": "admin@example.com",
+      "roles": ["ROLE-ADMIN"],
+      "teams": ["TEAM-OPS"]
+    },
+    {
+      "@id": "USER-DEVELOPER",
+      "@type": "User",
+      "rdfs:label": "Developer User",
+      "username": "developer",
+      "email": "dev@example.com",
+      "roles": ["ROLE-DEVELOPER"],
+      "teams": ["TEAM-DEV"]
+    },
+    {
+      "@id": "TEAM-OPS",
+      "@type": "Team",
+      "rdfs:label": "Operations Team",
+      "teamName": "Operations",
+      "members": ["USER-ADMIN"]
+    },
+    {
+      "@id": "TEAM-DEV",
+      "@type": "Team",
+      "rdfs:label": "Development Team",
+      "teamName": "Development",
+      "members": ["USER-DEVELOPER"]
+    },
+    {
+      "@id": "ROLE-ADMIN",
+      "@type": "Role",
+      "rdfs:label": "Admin Role",
+      "roleName": "admin",
+      "permissions": ["approve_actions", "view_metrics", "manage_users"]
+    },
+    {
+      "@id": "ROLE-DEVELOPER",
+      "@type": "Role",
+      "rdfs:label": "Developer Role",
+      "roleName": "developer",
+      "permissions": ["view_metrics", "query_logs"]
+    }
+  ]
+}

@@ -1,0 +1,369 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/agents#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "langchain": "http://langchain.com/schema#"
+  },
+  "@graph": [
+    {
+      "@id": "Agent",
+      "@type": "owl:Class",
+      "rdfs:label": "Agent",
+      "rdfs:comment": "AI agent with specific capabilities"
+    },
+    {
+      "@id": "SupervisorAgent",
+      "@type": "owl:Class",
+      "rdfs:label": "Supervisor Agent",
+      "rdfs:subClassOf": "Agent",
+      "rdfs:comment": "Routes queries to specialist agents"
+    },
+    {
+      "@id": "SpecialistAgent",
+      "@type": "owl:Class",
+      "rdfs:label": "Specialist Agent",
+      "rdfs:subClassOf": "Agent",
+      "rdfs:comment": "Handles specific domain tasks"
+    },
+    {
+      "@id": "Tool",
+      "@type": "owl:Class",
+      "rdfs:label": "Tool",
+      "rdfs:comment": "Capability available to agents"
+    },
+    {
+      "@id": "Memory",
+      "@type": "owl:Class",
+      "rdfs:label": "Memory",
+      "rdfs:comment": "Agent memory storage"
+    },
+    {
+      "@id": "LLMModel",
+      "@type": "owl:Class",
+      "rdfs:label": "LLM Model",
+      "rdfs:comment": "Large Language Model used by agent"
+    },
+    {
+      "@id": "Prompt",
+      "@type": "owl:Class",
+      "rdfs:label": "Prompt",
+      "rdfs:comment": "System prompt defining agent behavior"
+    },
+    {
+      "@id": "Conversation",
+      "@type": "owl:Class",
+      "rdfs:label": "Conversation",
+      "rdfs:comment": "Interaction session with agent"
+    },
+    {
+      "@id": "uses",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "uses",
+      "rdfs:domain": "Agent",
+      "rdfs:range": ["Tool", "LLMModel", "Memory"]
+    },
+    {
+      "@id": "invokes",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "invokes",
+      "rdfs:domain": "Agent",
+      "rdfs:range": "Tool"
+    },
+    {
+      "@id": "stores",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "stores",
+      "rdfs:domain": "Agent",
+      "rdfs:range": "Memory"
+    },
+    {
+      "@id": "retrieves",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "retrieves",
+      "rdfs:domain": "Agent",
+      "rdfs:range": "Memory"
+    },
+    {
+      "@id": "routes",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "routes",
+      "rdfs:domain": "SupervisorAgent",
+      "rdfs:range": "SpecialistAgent"
+    },
+    {
+      "@id": "AGENT-SUPERVISOR",
+      "@type": "SupervisorAgent",
+      "rdfs:label": "Supervisor Agent",
+      "description": "Routes user queries to appropriate specialist agents",
+      "capabilities": [
+        "Intent classification",
+        "Query routing",
+        "Response aggregation",
+        "Context management"
+      ],
+      "uses": ["LLM-OPENAI-GPT4", "MEMORY-CHROMA", "TOOL-INTENT-CLASSIFIER"],
+      "routes": [
+        "AGENT-OBSERVABILITY",
+        "AGENT-POD-RECOVERY",
+        "AGENT-BACKUP-RESTORE"
+      ],
+      "systemPrompt": "PROMPT-SUPERVISOR"
+    },
+    {
+      "@id": "AGENT-OBSERVABILITY",
+      "@type": "SpecialistAgent",
+      "rdfs:label": "Observability Agent",
+      "description": "Queries Prometheus, Grafana, Loki for observability data",
+      "capabilities": [
+        "PromQL query execution",
+        "LogQL query execution",
+        "Grafana dashboard access",
+        "Metric analysis"
+      ],
+      "uses": [
+        "LLM-OPENAI-GPT4",
+        "MEMORY-CHROMA",
+        "TOOL-PROMETHEUS-QUERY",
+        "TOOL-LOKI-QUERY",
+        "TOOL-GRAFANA-API"
+      ],
+      "systemPrompt": "PROMPT-OBSERVABILITY"
+    },
+    {
+      "@id": "AGENT-POD-RECOVERY",
+      "@type": "SpecialistAgent",
+      "rdfs:label": "Pod Recovery Agent",
+      "description": "Detects and recovers pods in failed states",
+      "capabilities": [
+        "Pod status monitoring",
+        "CrashLoopBackOff detection",
+        "Pod restart with approval",
+        "Incident documentation"
+      ],
+      "uses": [
+        "LLM-OPENAI-GPT4",
+        "MEMORY-CHROMA",
+        "TOOL-KUBECTL-GET",
+        "TOOL-KUBECTL-DELETE",
+        "TOOL-SLACK-APPROVAL",
+        "TOOL-CONFLUENCE-CREATE"
+      ],
+      "systemPrompt": "PROMPT-POD-RECOVERY"
+    },
+    {
+      "@id": "AGENT-BACKUP-RESTORE",
+      "@type": "SpecialistAgent",
+      "rdfs:label": "Backup/Restore Agent",
+      "description": "Manages backups and restores using Velero",
+      "capabilities": [
+        "Backup creation",
+        "Restore execution",
+        "Backup scheduling",
+        "Backup verification"
+      ],
+      "uses": [
+        "LLM-OPENAI-GPT4",
+        "MEMORY-CHROMA",
+        "TOOL-VELERO-BACKUP",
+        "TOOL-VELERO-RESTORE",
+        "TOOL-ARGO-WORKFLOW"
+      ],
+      "systemPrompt": "PROMPT-BACKUP-RESTORE"
+    },
+    {
+      "@id": "LLM-OPENAI-GPT4",
+      "@type": "LLMModel",
+      "rdfs:label": "OpenAI GPT-4",
+      "provider": "OpenAI",
+      "modelName": "gpt-4-turbo-preview",
+      "contextWindow": 128000,
+      "temperature": 0.7,
+      "maxTokens": 4096
+    },
+    {
+      "@id": "LLM-IBM-GRANITE",
+      "@type": "LLMModel",
+      "rdfs:label": "IBM Granite",
+      "provider": "IBM watsonx.ai",
+      "modelName": "ibm/granite-13b-chat-v2",
+      "contextWindow": 8192,
+      "temperature": 0.7,
+      "maxTokens": 2048
+    },
+    {
+      "@id": "MEMORY-CHROMA",
+      "@type": "Memory",
+      "rdfs:label": "Chroma Vector Store",
+      "memoryType": "vector",
+      "technology": "Chroma",
+      "persistDirectory": "./agent_memory",
+      "collections": [
+        "conversations",
+        "incidents",
+        "resolutions",
+        "queries"
+      ]
+    },
+    {
+      "@id": "MEMORY-CONVERSATION-BUFFER",
+      "@type": "Memory",
+      "rdfs:label": "Conversation Buffer",
+      "memoryType": "buffer",
+      "technology": "LangChain ConversationBufferMemory",
+      "maxMessages": 10
+    },
+    {
+      "@id": "PROMPT-SUPERVISOR",
+      "@type": "Prompt",
+      "rdfs:label": "Supervisor Agent Prompt",
+      "content": "You are a supervisor agent that routes user queries to specialist agents. Analyze the user's intent and route to: ObservabilityAgent (for metrics/logs queries), PodRecoveryAgent (for pod issues), or BackupRestoreAgent (for backup/restore tasks). Always maintain context and aggregate responses.",
+      "variables": ["user_query", "conversation_history", "available_agents"]
+    },
+    {
+      "@id": "PROMPT-OBSERVABILITY",
+      "@type": "Prompt",
+      "rdfs:label": "Observability Agent Prompt",
+      "content": "You are an observability expert. Help users query Prometheus metrics, Loki logs, and Grafana dashboards. Always include namespace filter 'nilabja-haldar-dev' in queries. Explain results clearly and suggest follow-up queries.",
+      "variables": ["user_query", "query_results", "namespace"]
+    },
+    {
+      "@id": "PROMPT-POD-RECOVERY",
+      "@type": "Prompt",
+      "rdfs:label": "Pod Recovery Agent Prompt",
+      "content": "You are a pod recovery specialist. Detect pods in CrashLoopBackOff or failed states. ALWAYS request human approval via Slack before taking corrective actions. Document all incidents in Confluence. Operate only in namespace 'nilabja-haldar-dev'.",
+      "variables": ["pod_status", "approval_status", "namespace"]
+    },
+    {
+      "@id": "PROMPT-BACKUP-RESTORE",
+      "@type": "Prompt",
+      "rdfs:label": "Backup/Restore Agent Prompt",
+      "content": "You are a backup/restore specialist using Velero. Help users create backups, schedule recurring backups, and restore from backups. Always verify backup completion before confirming success.",
+      "variables": ["backup_name", "namespace", "resources"]
+    },
+    {
+      "@id": "CONV-001",
+      "@type": "Conversation",
+      "rdfs:label": "Observability Query Session",
+      "conversationId": "conv-2026-05-10-001",
+      "agent": "AGENT-OBSERVABILITY",
+      "user": "user@example.com",
+      "startedAt": "2026-05-10T16:00:00Z",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the CPU usage of backend pods?",
+          "timestamp": "2026-05-10T16:00:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "I'll query Prometheus for backend pod CPU usage...",
+          "timestamp": "2026-05-10T16:00:05Z",
+          "toolCalls": ["TOOL-PROMETHEUS-QUERY"]
+        },
+        {
+          "role": "assistant",
+          "content": "Backend pods are using an average of 45% CPU over the last 5 minutes.",
+          "timestamp": "2026-05-10T16:00:10Z"
+        }
+      ]
+    },
+    {
+      "@id": "AGENT-CONFIG-SUPERVISOR",
+      "@type": "owl:Class",
+      "rdfs:label": "Supervisor Agent Configuration",
+      "configuration": {
+        "port": 8001,
+        "namespace": "nilabja-haldar-dev",
+        "llm": {
+          "provider": "openai",
+          "model": "gpt-4-turbo-preview",
+          "temperature": 0.7
+        },
+        "memory": {
+          "type": "chroma",
+          "persistDirectory": "./supervisor_memory"
+        },
+        "tools": [
+          "intent_classifier",
+          "query_router"
+        ],
+        "routing": {
+          "observability": ["metrics", "logs", "dashboards", "prometheus", "loki", "grafana"],
+          "pod_recovery": ["pod", "crash", "restart", "crashloopbackoff", "oomkilled"],
+          "backup_restore": ["backup", "restore", "velero", "snapshot"]
+        }
+      }
+    },
+    {
+      "@id": "AGENT-CONFIG-OBSERVABILITY",
+      "@type": "owl:Class",
+      "rdfs:label": "Observability Agent Configuration",
+      "configuration": {
+        "port": 8002,
+        "namespace": "nilabja-haldar-dev",
+        "llm": {
+          "provider": "openai",
+          "model": "gpt-4-turbo-preview",
+          "temperature": 0.7
+        },
+        "memory": {
+          "type": "chroma",
+          "persistDirectory": "./observability_memory"
+        },
+        "tools": [
+          "prometheus_query",
+          "loki_query",
+          "grafana_api"
+        ],
+        "endpoints": {
+          "prometheus": "http://prometheus:9090",
+          "loki": "http://loki:3100",
+          "grafana": "http://grafana:3000"
+        }
+      }
+    },
+    {
+      "@id": "AGENT-CONFIG-POD-RECOVERY",
+      "@type": "owl:Class",
+      "rdfs:label": "Pod Recovery Agent Configuration",
+      "configuration": {
+        "port": 8003,
+        "namespace": "nilabja-haldar-dev",
+        "llm": {
+          "provider": "openai",
+          "model": "gpt-4-turbo-preview",
+          "temperature": 0.7
+        },
+        "memory": {
+          "type": "chroma",
+          "persistDirectory": "./pod_recovery_memory"
+        },
+        "tools": [
+          "kubectl_get",
+          "kubectl_delete",
+          "slack_approval",
+          "confluence_create"
+        ],
+        "approvalRequired": true,
+        "approvalTimeout": 300,
+        "defaultAction": "DENY"
+      }
+    },
+    {
+      "@id": "AGENT-METRICS",
+      "@type": "owl:Class",
+      "rdfs:label": "Agent Metrics",
+      "metrics": {
+        "queries_processed": "Counter",
+        "query_duration_seconds": "Histogram",
+        "tool_invocations": "Counter",
+        "errors": "Counter",
+        "approval_requests": "Counter",
+        "approval_rate": "Gauge"
+      }
+    }
+  ]
+}

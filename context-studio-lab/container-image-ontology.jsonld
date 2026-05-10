@@ -1,0 +1,80 @@
+{
+  "@context": {
+    "@vocab": "http://ai-observability.nilabja-haldar.dev/containers#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "ContainerImage",
+      "@type": "owl:Class",
+      "rdfs:label": "Container Image",
+      "rdfs:comment": "Container image"
+    },
+    {
+      "@id": "Registry",
+      "@type": "owl:Class",
+      "rdfs:label": "Registry",
+      "rdfs:comment": "Container registry"
+    },
+    {
+      "@id": "Tag",
+      "@type": "owl:Class",
+      "rdfs:label": "Tag",
+      "rdfs:comment": "Image tag"
+    },
+    {
+      "@id": "Vulnerability",
+      "@type": "owl:Class",
+      "rdfs:label": "Vulnerability",
+      "rdfs:comment": "Security vulnerability"
+    },
+    {
+      "@id": "IMAGE-BACKEND",
+      "@type": "ContainerImage",
+      "rdfs:label": "Backend Image",
+      "imageName": "backend",
+      "registry": "REGISTRY-QUAY",
+      "tags": ["TAG-LATEST", "TAG-V1-0-0"]
+    },
+    {
+      "@id": "IMAGE-FRONTEND",
+      "@type": "ContainerImage",
+      "rdfs:label": "Frontend Image",
+      "imageName": "frontend",
+      "registry": "REGISTRY-QUAY",
+      "tags": ["TAG-LATEST"]
+    },
+    {
+      "@id": "REGISTRY-QUAY",
+      "@type": "Registry",
+      "rdfs:label": "Quay.io Registry",
+      "registryUrl": "quay.io",
+      "namespace": "observability-platform"
+    },
+    {
+      "@id": "TAG-LATEST",
+      "@type": "Tag",
+      "rdfs:label": "Latest Tag",
+      "tagName": "latest"
+    },
+    {
+      "@id": "TAG-V1-0-0",
+      "@type": "Tag",
+      "rdfs:label": "Version 1.0.0 Tag",
+      "tagName": "v1.0.0",
+      "gitSha": "abc123def456"
+    },
+    {
+      "@id": "VULN-CVE-2024-1234",
+      "@type": "Vulnerability",
+      "rdfs:label": "CVE-2024-1234",
+      "cveId": "CVE-2024-1234",
+      "severity": "HIGH",
+      "affectedImage": "IMAGE-BACKEND",
+      "status": "PATCHED"
+    }
+  ]
+}
