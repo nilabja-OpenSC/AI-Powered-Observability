@@ -1,61 +1,13 @@
 {
   "mcpServers": {
-    "chrome-devtools": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "chrome-devtools-mcp@latest"
-      ]
-    },
-    "github": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-e",
-        "GITHUB_PERSONAL_ACCESS_TOKEN",
-        "-e",
-        "GITHUB_TOOLSETS",
-        "-e",
-        "GITHUB_READ_ONLY",
-        "-e",
-        "GITHUB_HOST",
-        "ghcr.io/github/github-mcp-server"
-      ],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "",
-        "GITHUB_TOOLSETS": "",
-        "GITHUB_READ_ONLY": "",
-        "GITHUB_HOST": "https://github.com"
-      }
-    },
-    "terraform": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-e",
-        "TFE_TOKEN",
-        "-e",
-        "TFE_ADDRESS",
-        "-e",
-        "ENABLE_TF_OPERATIONS",
-        "hashicorp/terraform-mcp-server:0.3.3"
-      ],
-      "env": {
-        "TFE_TOKEN": "",
-        "TFE_ADDRESS": "",
-        "ENABLE_TF_OPERATIONS": ""
-      }
-    },
-    "sequentialthinking": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
-      ]
+    "context-studio": {
+      "type": "streamable-http",
+      "url": "https://servicesessentials.ibm.com/mcp-gateway/service/gateway/servers/8ccdd203bdee4014b08e82eedb6046e2/mcp",
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzaHJhZGRoYS5wYXJpa2gxQGlibS5jb20iLCJqdGkiOiI2ZGRjMDk2ZC0yOWE3LTQ1NTYtYjNmMy1lYzc0OTA3MTAwMGEiLCJ0b2tlbl91c2UiOiJhcGkiLCJpYXQiOjE3Nzg0ODY4MzcsImlzcyI6Im1jcGdhdGV3YXkiLCJhdWQiOiJtY3BnYXRld2F5LWFwaSIsInVzZXIiOnsiZW1haWwiOiJzaHJhZGRoYS5wYXJpa2gxQGlibS5jb20iLCJmdWxsX25hbWUiOiJBUEkgVG9rZW4gVXNlciIsImlzX2FkbWluIjp0cnVlLCJhdXRoX3Byb3ZpZGVyIjoiYXBpX3Rva2VuIn0sInRlYW1zIjpudWxsLCJzY29wZXMiOnsic2VydmVyX2lkIjoiOGNjZGQyMDNiZGVlNDAxNGIwOGU4MmVlZGI2MDQ2ZTIiLCJwZXJtaXNzaW9ucyI6W10sImlwX3Jlc3RyaWN0aW9ucyI6W10sInRpbWVfcmVzdHJpY3Rpb25zIjp7fX0sImV4cCI6MTc4MTA3ODgzN30.DlUlDzZQvvS29h47rY6gm_2W-KiJx77t9QFrHIMDT1k",
+        "x-api-key": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJlbWFpbEFkZHJlc3MiOiJuaGFsZGFyMUBpbi5pYm0uY29tIiwidGVhbUlkIjoiNmEwMDJiZTNlOWVlZDkyYTcyZDc2NDFjIiwiY29udGV4dElkIjoiY3R4Xzc1YzUwNTk2ZmIyYyIsImlhdCI6MTc3ODQ4NjgzNiwiZXhwIjoxNzgxMDc4ODM2LCJpc3MiOiJjb250ZXh0LWJyb2tlciIsInRva2VuX2lkIjoiMDJkZWNjMDAtZTE2Yy00NDMwLWJlNmQtYzA0NjY0ZDRhNGIzIn0.3VcnBSX3DD4uWoQp_KNUzEf_lWLmsVAw0bE4zMn3Fk_DsA2zIeT52bti1CdrVHEp9EaI2ryeVTFfrJTIjgxwLA"
+      },
+      "disabled": false
     }
   }
 }

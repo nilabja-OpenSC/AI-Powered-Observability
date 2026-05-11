@@ -1,370 +1,386 @@
 {
   "@context": {
-    "@vocab": "http://ai-observability.nilabja-haldar.dev/architecture#",
-    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-    "owl": "http://www.w3.org/2002/07/owl#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
-    "dcterms": "http://purl.org/dc/terms/"
+    "sao": "http://ai-observability.nilabja-haldar.dev/architecture#",
+    "schema": "http://schema.org/",
+    "id": "@id",
+    "type": "@type",
+    "name": "schema:name",
+    "description": "schema:description",
+    "attributes": "sao:attributes",
+    "identityKey": "sao:identityKey",
+    "humanRef": "sao:humanRef",
+    "invariant": "sao:invariant",
+    "hasState": {
+      "@id": "sao:hasState",
+      "@type": "@id"
+    },
+    "initialState": {
+      "@id": "sao:initialState",
+      "@type": "@id"
+    },
+    "terminalStates": {
+      "@id": "sao:terminalStates",
+      "@type": "@id"
+    },
+    "relatesTo": {
+      "@id": "sao:relatesTo",
+      "@type": "@id"
+    },
+    "emitsEvent": {
+      "@id": "sao:emitsEvent",
+      "@type": "@id"
+    },
+    "from": {
+      "@id": "sao:from",
+      "@type": "@id"
+    },
+    "to": {
+      "@id": "sao:to",
+      "@type": "@id"
+    },
+    "precondition": "sao:precondition",
+    "postcondition": "sao:postcondition",
+    "Entity": "sao:Entity",
+    "Operation": "sao:Operation",
+    "State": "sao:State"
   },
   "@graph": [
     {
-      "@id": "Component",
-      "@type": "owl:Class",
-      "rdfs:label": "Component",
-      "rdfs:comment": "Base class for all system components"
+      "id": "sao:Component",
+      "type": "Entity",
+      "name": "Component",
+      "description": "A deployable unit of the AI-Powered Observability Platform",
+      "identityKey": "componentId: UUID",
+      "humanRef": "componentName",
+      "attributes": {
+        "componentId": "string",
+        "componentName": "string",
+        "description": "string",
+        "technology": "string",
+        "port": "integer|null",
+        "namespace": "string",
+        "componentType": "APPLICATION|INFRASTRUCTURE|DATA_STORE"
+      },
+      "invariant": [
+        "componentName must be unique within namespace",
+        "All components must be deployed in nilabja-haldar-dev namespace",
+        "Port must be unique if specified"
+      ],
+      "hasState": [
+        "sao:ComponentPending",
+        "sao:ComponentDeploying",
+        "sao:ComponentRunning",
+        "sao:ComponentFailed",
+        "sao:ComponentStopped"
+      ],
+      "initialState": "sao:ComponentPending",
+      "terminalStates": [
+        "sao:ComponentStopped"
+      ],
+      "relatesTo": [
+        "sao:Component",
+        "sao:DataStore",
+        "sao:CommunicationChannel"
+      ],
+      "emitsEvent": [
+        "sao:ComponentDeployed",
+        "sao:ComponentStarted",
+        "sao:ComponentFailed"
+      ]
     },
     {
-      "@id": "ApplicationComponent",
-      "@type": "owl:Class",
-      "rdfs:label": "Application Component",
-      "rdfs:subClassOf": "Component"
+      "id": "sao:ApplicationComponent",
+      "type": "Entity",
+      "name": "ApplicationComponent",
+      "description": "Application-layer component (Backend, Frontend, AI Agents)",
+      "identityKey": "componentId: UUID",
+      "humanRef": "componentName",
+      "attributes": {
+        "componentId": "string",
+        "componentName": "string",
+        "description": "string",
+        "technology": "string",
+        "port": "integer",
+        "replicas": "integer",
+        "resourceLimits": "object"
+      },
+      "invariant": [
+        "Must expose at least one communication channel",
+        "Must be monitored by Prometheus",
+        "Must have health check endpoint"
+      ],
+      "hasState": [
+        "sao:ComponentPending",
+        "sao:ComponentDeploying",
+        "sao:ComponentRunning",
+        "sao:ComponentFailed",
+        "sao:ComponentStopped"
+      ],
+      "initialState": "sao:ComponentPending",
+      "terminalStates": [
+        "sao:ComponentStopped"
+      ],
+      "relatesTo": [
+        "sao:InfrastructureComponent",
+        "sao:DataStore"
+      ]
     },
     {
-      "@id": "InfrastructureComponent",
-      "@type": "owl:Class",
-      "rdfs:label": "Infrastructure Component",
-      "rdfs:subClassOf": "Component"
+      "id": "sao:InfrastructureComponent",
+      "type": "Entity",
+      "name": "InfrastructureComponent",
+      "description": "Infrastructure-layer component (Prometheus, Loki, Grafana)",
+      "identityKey": "componentId: UUID",
+      "humanRef": "componentName",
+      "attributes": {
+        "componentId": "string",
+        "componentName": "string",
+        "description": "string",
+        "technology": "string",
+        "port": "integer",
+        "retentionPeriod": "string|null",
+        "storageSize": "string|null"
+      },
+      "invariant": [
+        "Must be deployed in nilabja-haldar-dev namespace",
+        "Must have persistent storage if stateful",
+        "Must expose metrics endpoint"
+      ],
+      "hasState": [
+        "sao:ComponentPending",
+        "sao:ComponentDeploying",
+        "sao:ComponentRunning",
+        "sao:ComponentFailed",
+        "sao:ComponentStopped"
+      ],
+      "initialState": "sao:ComponentPending",
+      "terminalStates": [
+        "sao:ComponentStopped"
+      ],
+      "relatesTo": [
+        "sao:DataStore",
+        "sao:ApplicationComponent"
+      ]
     },
     {
-      "@id": "DataStore",
-      "@type": "owl:Class",
-      "rdfs:label": "Data Store",
-      "rdfs:subClassOf": "Component"
+      "id": "sao:DataStore",
+      "type": "Entity",
+      "name": "DataStore",
+      "description": "Persistent data storage component",
+      "identityKey": "dataStoreId: UUID",
+      "humanRef": "dataStoreName",
+      "attributes": {
+        "dataStoreId": "string",
+        "dataStoreName": "string",
+        "description": "string",
+        "technology": "string",
+        "storageType": "PERSISTENT_VOLUME|OBJECT_STORAGE|TSDB",
+        "capacity": "string",
+        "backupEnabled": "boolean"
+      },
+      "invariant": [
+        "dataStoreName must be unique",
+        "Must have backup strategy if critical",
+        "Must be scoped to nilabja-haldar-dev namespace"
+      ],
+      "hasState": [
+        "sao:DataStoreProvisioning",
+        "sao:DataStoreReady",
+        "sao:DataStoreFull",
+        "sao:DataStoreFailed"
+      ],
+      "initialState": "sao:DataStoreProvisioning",
+      "terminalStates": [
+        "sao:DataStoreFailed"
+      ],
+      "relatesTo": [
+        "sao:Component"
+      ]
     },
     {
-      "@id": "CommunicationChannel",
-      "@type": "owl:Class",
-      "rdfs:label": "Communication Channel",
-      "rdfs:comment": "Mechanism for inter-component communication"
+      "id": "sao:CommunicationChannel",
+      "type": "Entity",
+      "name": "CommunicationChannel",
+      "description": "Mechanism for inter-component communication",
+      "identityKey": "channelId: UUID",
+      "humanRef": "channelName",
+      "attributes": {
+        "channelId": "string",
+        "channelName": "string",
+        "protocol": "HTTP|HTTPS|WEBSOCKET|GRPC|PROMQL|LOGQL",
+        "format": "JSON|PROTOBUF|QUERY_LANGUAGE",
+        "secured": "boolean"
+      },
+      "invariant": [
+        "channelName must be unique",
+        "External channels must use HTTPS",
+        "Must define clear contract/schema"
+      ],
+      "relatesTo": [
+        "sao:Component"
+      ]
     },
     {
-      "@id": "dependsOn",
-      "@type": "owl:ObjectProperty",
-      "rdfs:label": "depends on",
-      "rdfs:domain": "Component",
-      "rdfs:range": "Component"
+      "id": "sao:DependsOn",
+      "type": "Operation",
+      "name": "DependsOn",
+      "description": "Defines dependency between components",
+      "from": "sao:Component",
+      "to": "sao:Component",
+      "precondition": [
+        "Both components must exist",
+        "No circular dependencies allowed",
+        "Dependent component must start after dependency"
+      ],
+      "postcondition": [
+        "Dependency relationship is recorded",
+        "Deployment order is enforced",
+        "Health checks validate dependency availability"
+      ]
     },
     {
-      "@id": "communicatesWith",
-      "@type": "owl:ObjectProperty",
-      "rdfs:label": "communicates with",
-      "rdfs:domain": "Component",
-      "rdfs:range": "Component"
+      "id": "sao:CommunicatesWith",
+      "type": "Operation",
+      "name": "CommunicatesWith",
+      "description": "Establishes communication between components",
+      "from": "sao:Component",
+      "to": "sao:Component",
+      "precondition": [
+        "Both components must be running",
+        "Communication channel must be defined",
+        "Network policies must allow traffic"
+      ],
+      "postcondition": [
+        "Communication is established",
+        "Traffic is monitored and logged",
+        "Errors are tracked and alerted"
+      ]
     },
     {
-      "@id": "deploysTo",
-      "@type": "owl:ObjectProperty",
-      "rdfs:label": "deploys to",
-      "rdfs:domain": "ApplicationComponent",
-      "rdfs:range": "InfrastructureComponent"
+      "id": "sao:DeploysTo",
+      "type": "Operation",
+      "name": "DeploysTo",
+      "description": "Deploys component to infrastructure",
+      "from": "sao:ApplicationComponent",
+      "to": "sao:InfrastructureComponent",
+      "precondition": [
+        "Infrastructure must be ready",
+        "Component must be packaged (container image)",
+        "Namespace must exist"
+      ],
+      "postcondition": [
+        "Component is deployed and running",
+        "Health checks are passing",
+        "Metrics are being collected"
+      ]
     },
     {
-      "@id": "stores",
-      "@type": "owl:ObjectProperty",
-      "rdfs:label": "stores",
-      "rdfs:domain": "Component",
-      "rdfs:range": "DataStore"
+      "id": "sao:Stores",
+      "type": "Operation",
+      "name": "Stores",
+      "description": "Component stores data in data store",
+      "from": "sao:Component",
+      "to": "sao:DataStore",
+      "precondition": [
+        "DataStore must be ready",
+        "Component must have credentials",
+        "Storage capacity must be available"
+      ],
+      "postcondition": [
+        "Data is persisted",
+        "Backups are configured (if enabled)",
+        "Storage usage is monitored"
+      ]
     },
     {
-      "@id": "monitors",
-      "@type": "owl:ObjectProperty",
-      "rdfs:label": "monitors",
-      "rdfs:domain": "Component",
-      "rdfs:range": "Component"
+      "id": "sao:Monitors",
+      "type": "Operation",
+      "name": "Monitors",
+      "description": "Component monitors another component",
+      "from": "sao:InfrastructureComponent",
+      "to": "sao:Component",
+      "precondition": [
+        "Monitoring component must be running",
+        "Target component must expose metrics",
+        "ServiceMonitor must be configured"
+      ],
+      "postcondition": [
+        "Metrics are being collected",
+        "Alerts are configured",
+        "Dashboards are available"
+      ]
     },
     {
-      "@id": "exposes",
-      "@type": "owl:ObjectProperty",
-      "rdfs:label": "exposes",
-      "rdfs:domain": "Component",
-      "rdfs:range": "CommunicationChannel"
+      "id": "sao:Exposes",
+      "type": "Operation",
+      "name": "Exposes",
+      "description": "Component exposes communication channel",
+      "from": "sao:Component",
+      "to": "sao:CommunicationChannel",
+      "precondition": [
+        "Component must be running",
+        "Port must be available",
+        "Service must be configured"
+      ],
+      "postcondition": [
+        "Channel is accessible",
+        "Traffic is routed correctly",
+        "Channel is documented in API specs"
+      ]
     },
     {
-      "@id": "COMP-BACKEND",
-      "@type": "ApplicationComponent",
-      "rdfs:label": "Backend API",
-      "description": "FastAPI backend service for e-commerce application",
-      "technology": "Python 3.11, FastAPI",
-      "port": 8000,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "stores": "DATA-POSTGRESQL",
-      "exposes": "COMM-REST-API",
-      "communicatesWith": ["COMP-FRONTEND", "COMP-CHAT-UI"]
+      "id": "sao:ComponentPending",
+      "type": "State",
+      "name": "ComponentPending",
+      "description": "Component is pending deployment"
     },
     {
-      "@id": "COMP-FRONTEND",
-      "@type": "ApplicationComponent",
-      "rdfs:label": "Frontend UI",
-      "description": "Next.js frontend for e-commerce application",
-      "technology": "Next.js, React, TypeScript",
-      "port": 3000,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "communicatesWith": "COMP-BACKEND",
-      "exposes": "COMM-HTTP"
+      "id": "sao:ComponentDeploying",
+      "type": "State",
+      "name": "ComponentDeploying",
+      "description": "Component is being deployed"
     },
     {
-      "@id": "COMP-CHAT-UI",
-      "@type": "ApplicationComponent",
-      "rdfs:label": "Chat UI",
-      "description": "Vite-based chat interface for observability queries",
-      "technology": "Vite, React, TypeScript, TailwindCSS",
-      "port": 5173,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "communicatesWith": ["COMP-SUPERVISOR-AGENT", "COMP-BACKEND"],
-      "exposes": "COMM-WEBSOCKET"
+      "id": "sao:ComponentRunning",
+      "type": "State",
+      "name": "ComponentRunning",
+      "description": "Component is running and healthy"
     },
     {
-      "@id": "COMP-SUPERVISOR-AGENT",
-      "@type": "ApplicationComponent",
-      "rdfs:label": "Supervisor Agent",
-      "description": "AI agent that routes queries to specialist agents",
-      "technology": "Python, LangChain, OpenAI GPT-4",
-      "port": 8001,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "stores": "DATA-CHROMA",
-      "communicatesWith": ["COMP-OBSERVABILITY-AGENT", "COMP-POD-RECOVERY-AGENT", "COMP-BACKUP-RESTORE-AGENT"],
-      "exposes": "COMM-REST-API"
+      "id": "sao:ComponentFailed",
+      "type": "State",
+      "name": "ComponentFailed",
+      "description": "Component deployment or runtime failed"
     },
     {
-      "@id": "COMP-OBSERVABILITY-AGENT",
-      "@type": "ApplicationComponent",
-      "rdfs:label": "Observability Agent",
-      "description": "AI agent for querying Prometheus, Grafana, Loki",
-      "technology": "Python, LangChain, OpenAI GPT-4",
-      "port": 8002,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "stores": "DATA-CHROMA",
-      "communicatesWith": ["COMP-PROMETHEUS", "COMP-LOKI", "COMP-GRAFANA"],
-      "exposes": "COMM-REST-API"
+      "id": "sao:ComponentStopped",
+      "type": "State",
+      "name": "ComponentStopped",
+      "description": "Component is stopped"
     },
     {
-      "@id": "COMP-POD-RECOVERY-AGENT",
-      "@type": "ApplicationComponent",
-      "rdfs:label": "Pod Recovery Agent",
-      "description": "AI agent for detecting and recovering failed pods",
-      "technology": "Python, LangChain, OpenAI GPT-4",
-      "port": 8003,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "stores": "DATA-CHROMA",
-      "communicatesWith": ["INFRA-K8S-API", "COMP-SLACK", "COMP-PROMETHEUS"],
-      "exposes": "COMM-REST-API"
+      "id": "sao:DataStoreProvisioning",
+      "type": "State",
+      "name": "DataStoreProvisioning",
+      "description": "Data store is being provisioned"
     },
     {
-      "@id": "COMP-BACKUP-RESTORE-AGENT",
-      "@type": "ApplicationComponent",
-      "rdfs:label": "Backup/Restore Agent",
-      "description": "AI agent for managing backups and restores",
-      "technology": "Python, LangChain, OpenAI GPT-4",
-      "port": 8004,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "communicatesWith": ["COMP-VELERO", "COMP-ARGO-WORKFLOWS"],
-      "exposes": "COMM-REST-API"
+      "id": "sao:DataStoreReady",
+      "type": "State",
+      "name": "DataStoreReady",
+      "description": "Data store is ready for use"
     },
     {
-      "@id": "COMP-PROMETHEUS",
-      "@type": "InfrastructureComponent",
-      "rdfs:label": "Prometheus",
-      "description": "Metrics collection and storage (6h retention)",
-      "technology": "Prometheus 2.45",
-      "port": 9090,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "stores": "DATA-PROMETHEUS-TSDB",
-      "monitors": ["COMP-BACKEND", "COMP-FRONTEND", "COMP-CHAT-UI", "COMP-SUPERVISOR-AGENT"],
-      "exposes": "COMM-PROMQL-API"
+      "id": "sao:DataStoreFull",
+      "type": "State",
+      "name": "DataStoreFull",
+      "description": "Data store is at capacity"
     },
     {
-      "@id": "COMP-THANOS",
-      "@type": "InfrastructureComponent",
-      "rdfs:label": "Thanos",
-      "description": "Long-term metrics storage (30d retention)",
-      "technology": "Thanos",
-      "port": 10902,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "stores": "DATA-S3-BUCKET",
-      "dependsOn": "COMP-PROMETHEUS",
-      "exposes": "COMM-PROMQL-API"
-    },
-    {
-      "@id": "COMP-LOKI",
-      "@type": "InfrastructureComponent",
-      "rdfs:label": "Loki",
-      "description": "Log aggregation and storage",
-      "technology": "Loki 2.8",
-      "port": 3100,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "stores": "DATA-LOKI-STORAGE",
-      "exposes": "COMM-LOGQL-API"
-    },
-    {
-      "@id": "COMP-PROMTAIL",
-      "@type": "InfrastructureComponent",
-      "rdfs:label": "Promtail",
-      "description": "Log collection agent (DaemonSet)",
-      "technology": "Promtail 2.8",
-      "port": 9080,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "communicatesWith": "COMP-LOKI"
-    },
-    {
-      "@id": "COMP-GRAFANA",
-      "@type": "InfrastructureComponent",
-      "rdfs:label": "Grafana",
-      "description": "Visualization and dashboards",
-      "technology": "Grafana 10.0",
-      "port": 3000,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "communicatesWith": ["COMP-PROMETHEUS", "COMP-LOKI", "COMP-THANOS"],
-      "exposes": "COMM-HTTP"
-    },
-    {
-      "@id": "COMP-ALERTMANAGER",
-      "@type": "InfrastructureComponent",
-      "rdfs:label": "Alertmanager",
-      "description": "Alert routing and notification",
-      "technology": "Alertmanager 0.26",
-      "port": 9093,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "dependsOn": "COMP-PROMETHEUS",
-      "communicatesWith": "COMP-SLACK",
-      "exposes": "COMM-REST-API"
-    },
-    {
-      "@id": "COMP-VELERO",
-      "@type": "InfrastructureComponent",
-      "rdfs:label": "Velero",
-      "description": "Kubernetes backup and restore",
-      "technology": "Velero 1.11",
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "stores": "DATA-S3-BUCKET",
-      "exposes": "COMM-REST-API"
-    },
-    {
-      "@id": "COMP-ARGO-WORKFLOWS",
-      "@type": "InfrastructureComponent",
-      "rdfs:label": "Argo Workflows",
-      "description": "Workflow orchestration for backup/restore",
-      "technology": "Argo Workflows 3.4",
-      "port": 2746,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "exposes": "COMM-REST-API"
-    },
-    {
-      "@id": "COMP-SLACK",
-      "@type": "ApplicationComponent",
-      "rdfs:label": "Slack Integration",
-      "description": "Slack workspace for notifications and approvals",
-      "technology": "Slack API, Webhooks",
-      "exposes": "COMM-WEBHOOK"
-    },
-    {
-      "@id": "COMP-CONFLUENCE",
-      "@type": "ApplicationComponent",
-      "rdfs:label": "Confluence Integration",
-      "description": "Confluence for incident documentation",
-      "technology": "Confluence Cloud API",
-      "exposes": "COMM-REST-API"
-    },
-    {
-      "@id": "DATA-POSTGRESQL",
-      "@type": "DataStore",
-      "rdfs:label": "PostgreSQL Database",
-      "description": "Primary database for application data",
-      "technology": "PostgreSQL 15",
-      "port": 5432,
-      "deploysTo": "INFRA-K8S-NAMESPACE",
-      "storageType": "Persistent Volume (EFS CSI, 10GB)"
-    },
-    {
-      "@id": "DATA-CHROMA",
-      "@type": "DataStore",
-      "rdfs:label": "Chroma Vector Store",
-      "description": "Vector database for agent memory",
-      "technology": "Chroma",
-      "storageType": "Persistent Volume"
-    },
-    {
-      "@id": "DATA-PROMETHEUS-TSDB",
-      "@type": "DataStore",
-      "rdfs:label": "Prometheus TSDB",
-      "description": "Time series database for metrics (6h retention)",
-      "technology": "Prometheus TSDB",
-      "storageType": "Persistent Volume"
-    },
-    {
-      "@id": "DATA-LOKI-STORAGE",
-      "@type": "DataStore",
-      "rdfs:label": "Loki Storage",
-      "description": "Log storage backend",
-      "technology": "Filesystem",
-      "storageType": "Persistent Volume"
-    },
-    {
-      "@id": "DATA-S3-BUCKET",
-      "@type": "DataStore",
-      "rdfs:label": "S3 Bucket",
-      "description": "Object storage for Thanos and Velero",
-      "technology": "AWS S3 / MinIO",
-      "storageType": "Object Storage"
-    },
-    {
-      "@id": "INFRA-K8S-NAMESPACE",
-      "@type": "InfrastructureComponent",
-      "rdfs:label": "Kubernetes Namespace",
-      "description": "nilabja-haldar-dev namespace on OpenShift ROSA",
-      "technology": "Kubernetes 1.27, OpenShift ROSA",
-      "namespace": "nilabja-haldar-dev"
-    },
-    {
-      "@id": "INFRA-K8S-API",
-      "@type": "InfrastructureComponent",
-      "rdfs:label": "Kubernetes API Server",
-      "description": "Kubernetes control plane API",
-      "technology": "Kubernetes API",
-      "port": 6443,
-      "exposes": "COMM-REST-API"
-    },
-    {
-      "@id": "COMM-REST-API",
-      "@type": "CommunicationChannel",
-      "rdfs:label": "REST API",
-      "protocol": "HTTP/HTTPS",
-      "format": "JSON"
-    },
-    {
-      "@id": "COMM-PROMQL-API",
-      "@type": "CommunicationChannel",
-      "rdfs:label": "PromQL API",
-      "protocol": "HTTP",
-      "format": "PromQL Query Language"
-    },
-    {
-      "@id": "COMM-LOGQL-API",
-      "@type": "CommunicationChannel",
-      "rdfs:label": "LogQL API",
-      "protocol": "HTTP",
-      "format": "LogQL Query Language"
-    },
-    {
-      "@id": "COMM-WEBSOCKET",
-      "@type": "CommunicationChannel",
-      "rdfs:label": "WebSocket",
-      "protocol": "WebSocket",
-      "format": "JSON"
-    },
-    {
-      "@id": "COMM-WEBHOOK",
-      "@type": "CommunicationChannel",
-      "rdfs:label": "Webhook",
-      "protocol": "HTTPS",
-      "format": "JSON"
-    },
-    {
-      "@id": "COMM-HTTP",
-      "@type": "CommunicationChannel",
-      "rdfs:label": "HTTP",
-      "protocol": "HTTP/HTTPS",
-      "format": "HTML/JSON"
+      "id": "sao:DataStoreFailed",
+      "type": "State",
+      "name": "DataStoreFailed",
+      "description": "Data store has failed"
     }
   ]
 }

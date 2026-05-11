@@ -1,89 +1,299 @@
 {
   "@context": {
-    "@vocab": "http://ai-observability.nilabja-haldar.dev/observability-domain#",
-    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-    "owl": "http://www.w3.org/2002/07/owl#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#"
+    "odo": "http://ai-observability.nilabja-haldar.dev/observability-domain#",
+    "schema": "http://schema.org/",
+    "id": "@id",
+    "type": "@type",
+    "name": "schema:name",
+    "description": "schema:description",
+    "attributes": "odo:attributes",
+    "identityKey": "odo:identityKey",
+    "humanRef": "odo:humanRef",
+    "invariant": "odo:invariant",
+    "hasState": {
+      "@id": "odo:hasState",
+      "@type": "@id"
+    },
+    "initialState": {
+      "@id": "odo:initialState",
+      "@type": "@id"
+    },
+    "terminalStates": {
+      "@id": "odo:terminalStates",
+      "@type": "@id"
+    },
+    "relatesTo": {
+      "@id": "odo:relatesTo",
+      "@type": "@id"
+    },
+    "emitsEvent": {
+      "@id": "odo:emitsEvent",
+      "@type": "@id"
+    },
+    "from": {
+      "@id": "odo:from",
+      "@type": "@id"
+    },
+    "to": {
+      "@id": "odo:to",
+      "@type": "@id"
+    },
+    "precondition": "odo:precondition",
+    "postcondition": "odo:postcondition",
+    "Entity": "odo:Entity",
+    "Operation": "odo:Operation",
+    "State": "odo:State"
   },
   "@graph": [
     {
-      "@id": "GoldenSignal",
-      "@type": "owl:Class",
-      "rdfs:label": "Golden Signal",
-      "rdfs:comment": "Four Golden Signals of monitoring"
+      "id": "odo:GoldenSignal",
+      "type": "Entity",
+      "name": "GoldenSignal",
+      "description": "One of the Four Golden Signals of monitoring (Latency, Traffic, Errors, Saturation)",
+      "identityKey": "signalId: UUID",
+      "humanRef": "signalName",
+      "attributes": {
+        "signalId": "string",
+        "signalName": "LATENCY|TRAFFIC|ERRORS|SATURATION",
+        "description": "string",
+        "metric": "string",
+        "unit": "string",
+        "threshold": "number|null"
+      },
+      "invariant": [
+        "signalName must be one of the four golden signals",
+        "Must have associated metrics in Prometheus",
+        "Must be monitored for all critical services"
+      ],
+      "relatesTo": [
+        "odo:SLI",
+        "odo:Dashboard"
+      ]
     },
     {
-      "@id": "SLI",
-      "@type": "owl:Class",
-      "rdfs:label": "Service Level Indicator",
-      "rdfs:comment": "Service level indicator"
+      "id": "odo:SLI",
+      "type": "Entity",
+      "name": "SLI",
+      "description": "Service Level Indicator - quantitative measure of service level",
+      "identityKey": "sliId: UUID",
+      "humanRef": "sliName",
+      "attributes": {
+        "sliId": "string",
+        "sliName": "string",
+        "description": "string",
+        "metric": "string",
+        "target": "string",
+        "namespace": "string"
+      },
+      "invariant": [
+        "sliName must be unique per service",
+        "Must have measurable metric",
+        "Must be scoped to nilabja-haldar-dev namespace",
+        "Target must be achievable and realistic"
+      ],
+      "hasState": [
+        "odo:SLIMet",
+        "odo:SLIAtRisk",
+        "odo:SLIViolated"
+      ],
+      "initialState": "odo:SLIMet",
+      "terminalStates": [],
+      "relatesTo": [
+        "odo:SLO",
+        "odo:GoldenSignal"
+      ],
+      "emitsEvent": [
+        "odo:SLIViolation",
+        "odo:SLIRecovered"
+      ]
     },
     {
-      "@id": "SLO",
-      "@type": "owl:Class",
-      "rdfs:label": "Service Level Objective",
-      "rdfs:comment": "Service level objective"
+      "id": "odo:SLO",
+      "type": "Entity",
+      "name": "SLO",
+      "description": "Service Level Objective - target value or range for SLI",
+      "identityKey": "sloId: UUID",
+      "humanRef": "sloName",
+      "attributes": {
+        "sloId": "string",
+        "sloName": "string",
+        "description": "string",
+        "target": "string",
+        "window": "string",
+        "namespace": "string"
+      },
+      "invariant": [
+        "sloName must be unique per service",
+        "Must reference at least one SLI",
+        "Window must be defined (e.g., 30d, 7d)",
+        "Must have associated error budget"
+      ],
+      "hasState": [
+        "odo:SLOMet",
+        "odo:SLOAtRisk",
+        "odo:SLOViolated"
+      ],
+      "initialState": "odo:SLOMet",
+      "terminalStates": [],
+      "relatesTo": [
+        "odo:SLI",
+        "odo:ErrorBudget"
+      ],
+      "emitsEvent": [
+        "odo:SLOViolation",
+        "odo:SLORecovered"
+      ]
     },
     {
-      "@id": "ErrorBudget",
-      "@type": "owl:Class",
-      "rdfs:label": "Error Budget",
-      "rdfs:comment": "Error budget"
+      "id": "odo:ErrorBudget",
+      "type": "Entity",
+      "name": "ErrorBudget",
+      "description": "Allowable amount of error before SLO is violated",
+      "identityKey": "budgetId: UUID",
+      "humanRef": "budgetName",
+      "attributes": {
+        "budgetId": "string",
+        "budgetName": "string",
+        "remaining": "string",
+        "consumed": "string",
+        "status": "HEALTHY|WARNING|CRITICAL|EXHAUSTED"
+      },
+      "invariant": [
+        "Must be associated with an SLO",
+        "Remaining + Consumed must equal total budget",
+        "Status must reflect current budget state"
+      ],
+      "hasState": [
+        "odo:BudgetHealthy",
+        "odo:BudgetWarning",
+        "odo:BudgetCritical",
+        "odo:BudgetExhausted"
+      ],
+      "initialState": "odo:BudgetHealthy",
+      "terminalStates": [
+        "odo:BudgetExhausted"
+      ],
+      "relatesTo": [
+        "odo:SLO"
+      ],
+      "emitsEvent": [
+        "odo:BudgetWarning",
+        "odo:BudgetExhausted"
+      ]
     },
     {
-      "@id": "SIGNAL-LATENCY",
-      "@type": "GoldenSignal",
-      "rdfs:label": "Latency",
-      "signalName": "latency",
-      "description": "Time to serve a request"
+      "id": "odo:Measures",
+      "type": "Operation",
+      "name": "Measures",
+      "description": "SLI measures a specific aspect of service quality",
+      "from": "odo:SLI",
+      "to": "odo:GoldenSignal",
+      "precondition": [
+        "SLI must be defined",
+        "GoldenSignal must exist",
+        "Metrics must be available in Prometheus"
+      ],
+      "postcondition": [
+        "SLI is continuously measured",
+        "Measurements are stored in time series",
+        "Alerts are triggered on threshold violations"
+      ]
     },
     {
-      "@id": "SIGNAL-TRAFFIC",
-      "@type": "GoldenSignal",
-      "rdfs:label": "Traffic",
-      "signalName": "traffic",
-      "description": "Demand on the system"
+      "id": "odo:Targets",
+      "type": "Operation",
+      "name": "Targets",
+      "description": "SLO sets target for SLI",
+      "from": "odo:SLO",
+      "to": "odo:SLI",
+      "precondition": [
+        "SLO must be defined",
+        "SLI must exist and be measurable",
+        "Target must be realistic"
+      ],
+      "postcondition": [
+        "SLO target is set",
+        "Error budget is calculated",
+        "Compliance is monitored"
+      ]
     },
     {
-      "@id": "SIGNAL-ERRORS",
-      "@type": "GoldenSignal",
-      "rdfs:label": "Errors",
-      "signalName": "errors",
-      "description": "Rate of failed requests"
+      "id": "odo:Consumes",
+      "type": "Operation",
+      "name": "Consumes",
+      "description": "SLO violation consumes error budget",
+      "from": "odo:SLO",
+      "to": "odo:ErrorBudget",
+      "precondition": [
+        "SLO must be violated",
+        "Error budget must have remaining capacity",
+        "Violation must be measured"
+      ],
+      "postcondition": [
+        "Error budget is reduced",
+        "Budget status is updated",
+        "Alerts are sent if budget is low"
+      ]
     },
     {
-      "@id": "SIGNAL-SATURATION",
-      "@type": "GoldenSignal",
-      "rdfs:label": "Saturation",
-      "signalName": "saturation",
-      "description": "System resource utilization"
+      "id": "odo:SLIMet",
+      "type": "State",
+      "name": "SLIMet",
+      "description": "SLI is meeting its target"
     },
     {
-      "@id": "SLI-AVAILABILITY",
-      "@type": "SLI",
-      "rdfs:label": "Availability SLI",
-      "sliName": "availability",
-      "metric": "up{namespace='nilabja-haldar-dev'}",
-      "target": "99.9%"
+      "id": "odo:SLIAtRisk",
+      "type": "State",
+      "name": "SLIAtRisk",
+      "description": "SLI is approaching violation threshold"
     },
     {
-      "@id": "SLO-AVAILABILITY",
-      "@type": "SLO",
-      "rdfs:label": "Availability SLO",
-      "sloName": "availability_slo",
-      "sli": "SLI-AVAILABILITY",
-      "target": "99.9%",
-      "window": "30d"
+      "id": "odo:SLIViolated",
+      "type": "State",
+      "name": "SLIViolated",
+      "description": "SLI has violated its target"
     },
     {
-      "@id": "BUDGET-001",
-      "@type": "ErrorBudget",
-      "rdfs:label": "Error Budget 001",
-      "slo": "SLO-AVAILABILITY",
-      "remaining": "0.05%",
-      "consumed": "0.05%",
-      "status": "HEALTHY"
+      "id": "odo:SLOMet",
+      "type": "State",
+      "name": "SLOMet",
+      "description": "SLO is being met"
+    },
+    {
+      "id": "odo:SLOAtRisk",
+      "type": "State",
+      "name": "SLOAtRisk",
+      "description": "SLO is at risk of violation"
+    },
+    {
+      "id": "odo:SLOViolated",
+      "type": "State",
+      "name": "SLOViolated",
+      "description": "SLO has been violated"
+    },
+    {
+      "id": "odo:BudgetHealthy",
+      "type": "State",
+      "name": "BudgetHealthy",
+      "description": "Error budget is healthy (>50% remaining)"
+    },
+    {
+      "id": "odo:BudgetWarning",
+      "type": "State",
+      "name": "BudgetWarning",
+      "description": "Error budget is in warning state (20-50% remaining)"
+    },
+    {
+      "id": "odo:BudgetCritical",
+      "type": "State",
+      "name": "BudgetCritical",
+      "description": "Error budget is critical (<20% remaining)"
+    },
+    {
+      "id": "odo:BudgetExhausted",
+      "type": "State",
+      "name": "BudgetExhausted",
+      "description": "Error budget is fully consumed"
     }
   ]
 }

@@ -1,0 +1,671 @@
+{
+  "@context": {
+    "sro": "http://example.org/software-requirements#",
+    "schema": "http://schema.org/",
+    "id": "@id",
+    "type": "@type",
+    "name": "schema:name",
+    "description": "schema:description",
+    "attributes": "sro:attributes",
+    "identityKey": "sro:identityKey",
+    "humanRef": "sro:humanRef",
+    "invariant": "sro:invariant",
+    "hasState": {
+      "@id": "sro:hasState",
+      "@type": "@id"
+    },
+    "initialState": {
+      "@id": "sro:initialState",
+      "@type": "@id"
+    },
+    "terminalStates": {
+      "@id": "sro:terminalStates",
+      "@type": "@id"
+    },
+    "relatesTo": {
+      "@id": "sro:relatesTo",
+      "@type": "@id"
+    },
+    "emitsEvent": {
+      "@id": "sro:emitsEvent",
+      "@type": "@id"
+    },
+    "from": {
+      "@id": "sro:from",
+      "@type": "@id"
+    },
+    "to": {
+      "@id": "sro:to",
+      "@type": "@id"
+    },
+    "precondition": "sro:precondition",
+    "postcondition": "sro:postcondition",
+    "Entity": "sro:Entity",
+    "Operation": "sro:Operation",
+    "State": "sro:State"
+  },
+  "@graph": [
+    {
+      "id": "sro:Requirement",
+      "type": "Entity",
+      "name": "Requirement",
+      "description": "A documented need or constraint for a software system",
+      "identityKey": "requirementId: UUID",
+      "humanRef": "requirementCode",
+      "attributes": {
+        "requirementId": "string",
+        "requirementCode": "string",
+        "title": "string",
+        "description": "string",
+        "rationale": "string|null",
+        "acceptanceCriteria": "string|null",
+        "priority": "CRITICAL|HIGH|MEDIUM|LOW",
+        "status": "DRAFT|APPROVED|IMPLEMENTED|VERIFIED|DEPRECATED",
+        "version": "string",
+        "createdDate": "dateTime",
+        "lastModified": "dateTime"
+      },
+      "invariant": [
+        "requirementCode must be unique",
+        "priority must be one of defined values",
+        "A requirement must have at least one stakeholder",
+        "version must follow semantic versioning"
+      ],
+      "hasState": [
+        "sro:RequirementDraft",
+        "sro:RequirementApproved",
+        "sro:RequirementImplemented",
+        "sro:RequirementVerified",
+        "sro:RequirementDeprecated"
+      ],
+      "initialState": "sro:RequirementDraft",
+      "terminalStates": [
+        "sro:RequirementVerified",
+        "sro:RequirementDeprecated"
+      ],
+      "relatesTo": [
+        "sro:Stakeholder",
+        "sro:Goal",
+        "sro:UseCase",
+        "sro:TestCase"
+      ],
+      "emitsEvent": [
+        "sro:RequirementApproved",
+        "sro:RequirementImplemented",
+        "sro:RequirementVerified"
+      ]
+    },
+    {
+      "id": "sro:FunctionalRequirement",
+      "type": "Entity",
+      "name": "FunctionalRequirement",
+      "description": "Describes a specific behavior or function of the system",
+      "identityKey": "requirementId: UUID",
+      "humanRef": "requirementCode",
+      "attributes": {
+        "requirementId": "string",
+        "requirementCode": "string",
+        "title": "string",
+        "description": "string",
+        "rationale": "string|null",
+        "acceptanceCriteria": "string",
+        "priority": "CRITICAL|HIGH|MEDIUM|LOW",
+        "status": "DRAFT|APPROVED|IMPLEMENTED|VERIFIED|DEPRECATED",
+        "inputData": "string|null",
+        "outputData": "string|null",
+        "businessRule": "string|null",
+        "userStory": "string|null"
+      },
+      "invariant": [
+        "Must define clear acceptance criteria",
+        "Must specify expected system behavior",
+        "userStory should follow format: As a [role], I want [feature] so that [benefit]"
+      ],
+      "hasState": [
+        "sro:RequirementDraft",
+        "sro:RequirementApproved",
+        "sro:RequirementImplemented",
+        "sro:RequirementVerified",
+        "sro:RequirementDeprecated"
+      ],
+      "initialState": "sro:RequirementDraft",
+      "terminalStates": [
+        "sro:RequirementVerified",
+        "sro:RequirementDeprecated"
+      ],
+      "relatesTo": [
+        "sro:Stakeholder",
+        "sro:Goal",
+        "sro:UseCase",
+        "sro:TestCase"
+      ]
+    },
+    {
+      "id": "sro:NonFunctionalRequirement",
+      "type": "Entity",
+      "name": "NonFunctionalRequirement",
+      "description": "Describes a quality attribute or constraint of the system",
+      "identityKey": "requirementId: UUID",
+      "humanRef": "requirementCode",
+      "attributes": {
+        "requirementId": "string",
+        "requirementCode": "string",
+        "title": "string",
+        "description": "string",
+        "category": "USABILITY|RELIABILITY|MAINTAINABILITY|PORTABILITY|SCALABILITY",
+        "priority": "CRITICAL|HIGH|MEDIUM|LOW",
+        "status": "DRAFT|APPROVED|IMPLEMENTED|VERIFIED|DEPRECATED",
+        "metric": "string",
+        "targetValue": "string",
+        "measurementMethod": "string|null"
+      },
+      "invariant": [
+        "Must specify measurable quality criteria",
+        "category must be one of defined values",
+        "targetValue must be quantifiable"
+      ],
+      "hasState": [
+        "sro:RequirementDraft",
+        "sro:RequirementApproved",
+        "sro:RequirementImplemented",
+        "sro:RequirementVerified",
+        "sro:RequirementDeprecated"
+      ],
+      "initialState": "sro:RequirementDraft",
+      "terminalStates": [
+        "sro:RequirementVerified",
+        "sro:RequirementDeprecated"
+      ],
+      "relatesTo": [
+        "sro:Stakeholder",
+        "sro:Goal",
+        "sro:TestCase"
+      ]
+    },
+    {
+      "id": "sro:SecurityRequirement",
+      "type": "Entity",
+      "name": "SecurityRequirement",
+      "description": "Requirement related to system security and data protection",
+      "identityKey": "requirementId: UUID",
+      "humanRef": "requirementCode",
+      "attributes": {
+        "requirementId": "string",
+        "requirementCode": "string",
+        "title": "string",
+        "description": "string",
+        "securityControl": "AUTHENTICATION|AUTHORIZATION|ENCRYPTION|AUDIT",
+        "threatModel": "string",
+        "complianceStandard": "GDPR|HIPAA|PCI_DSS|SOC2|OWASP",
+        "riskLevel": "CRITICAL|HIGH|MEDIUM|LOW",
+        "priority": "CRITICAL|HIGH|MEDIUM|LOW",
+        "status": "DRAFT|APPROVED|IMPLEMENTED|VERIFIED|DEPRECATED"
+      },
+      "invariant": [
+        "Must specify security control type",
+        "Must document threat being mitigated",
+        "riskLevel must align with priority",
+        "CRITICAL risk requires CRITICAL priority"
+      ],
+      "hasState": [
+        "sro:RequirementDraft",
+        "sro:RequirementApproved",
+        "sro:RequirementImplemented",
+        "sro:RequirementVerified",
+        "sro:RequirementDeprecated"
+      ],
+      "initialState": "sro:RequirementDraft",
+      "terminalStates": [
+        "sro:RequirementVerified",
+        "sro:RequirementDeprecated"
+      ],
+      "relatesTo": [
+        "sro:Stakeholder",
+        "sro:Goal",
+        "sro:TestCase"
+      ]
+    },
+    {
+      "id": "sro:PerformanceRequirement",
+      "type": "Entity",
+      "name": "PerformanceRequirement",
+      "description": "Requirement specifying system performance characteristics",
+      "identityKey": "requirementId: UUID",
+      "humanRef": "requirementCode",
+      "attributes": {
+        "requirementId": "string",
+        "requirementCode": "string",
+        "title": "string",
+        "description": "string",
+        "performanceMetric": "RESPONSE_TIME|THROUGHPUT|LATENCY|RESOURCE_USAGE",
+        "threshold": "string",
+        "loadCondition": "string",
+        "percentile": "string|null",
+        "priority": "CRITICAL|HIGH|MEDIUM|LOW",
+        "status": "DRAFT|APPROVED|IMPLEMENTED|VERIFIED|DEPRECATED"
+      },
+      "invariant": [
+        "Must specify measurable performance metric",
+        "threshold must be quantifiable",
+        "loadCondition must be clearly defined",
+        "percentile should be specified for latency metrics (e.g., p95, p99)"
+      ],
+      "hasState": [
+        "sro:RequirementDraft",
+        "sro:RequirementApproved",
+        "sro:RequirementImplemented",
+        "sro:RequirementVerified",
+        "sro:RequirementDeprecated"
+      ],
+      "initialState": "sro:RequirementDraft",
+      "terminalStates": [
+        "sro:RequirementVerified",
+        "sro:RequirementDeprecated"
+      ],
+      "relatesTo": [
+        "sro:Stakeholder",
+        "sro:Goal",
+        "sro:TestCase"
+      ]
+    },
+    {
+      "id": "sro:Stakeholder",
+      "type": "Entity",
+      "name": "Stakeholder",
+      "description": "An individual or group with interest in the system requirements",
+      "identityKey": "stakeholderId: UUID",
+      "humanRef": "name",
+      "attributes": {
+        "stakeholderId": "string",
+        "name": "string",
+        "role": "PRODUCT_OWNER|DEVELOPER|TESTER|END_USER|BUSINESS_ANALYST|ARCHITECT",
+        "organization": "string|null",
+        "contactInfo": "string|null",
+        "influence": "HIGH|MEDIUM|LOW",
+        "interest": "HIGH|MEDIUM|LOW"
+      },
+      "invariant": [
+        "name must be unique within organization",
+        "role must be defined",
+        "influence and interest must be assessed"
+      ],
+      "relatesTo": [
+        "sro:Requirement",
+        "sro:Goal"
+      ]
+    },
+    {
+      "id": "sro:Goal",
+      "type": "Entity",
+      "name": "Goal",
+      "description": "A high-level objective or business goal that requirements support",
+      "identityKey": "goalId: UUID",
+      "humanRef": "title",
+      "attributes": {
+        "goalId": "string",
+        "title": "string",
+        "description": "string",
+        "type": "BUSINESS|TECHNICAL|USER_EXPERIENCE|OPERATIONAL",
+        "successCriteria": "string",
+        "targetDate": "date|null",
+        "priority": "CRITICAL|HIGH|MEDIUM|LOW"
+      },
+      "invariant": [
+        "title must be unique",
+        "A goal must be refined by at least one requirement",
+        "successCriteria must be measurable"
+      ],
+      "relatesTo": [
+        "sro:Requirement",
+        "sro:Stakeholder"
+      ]
+    },
+    {
+      "id": "sro:UseCase",
+      "type": "Entity",
+      "name": "UseCase",
+      "description": "A specific scenario of system usage",
+      "identityKey": "useCaseId: UUID",
+      "humanRef": "title",
+      "attributes": {
+        "useCaseId": "string",
+        "title": "string",
+        "description": "string",
+        "actor": "string",
+        "preconditions": "string|null",
+        "postconditions": "string|null",
+        "mainFlow": "string",
+        "alternativeFlows": "string|null",
+        "exceptionFlows": "string|null",
+        "priority": "CRITICAL|HIGH|MEDIUM|LOW"
+      },
+      "invariant": [
+        "title must be unique",
+        "actor must be specified",
+        "mainFlow must be defined",
+        "Must cover at least one requirement"
+      ],
+      "relatesTo": [
+        "sro:Requirement",
+        "sro:UseCase"
+      ]
+    },
+    {
+      "id": "sro:TestCase",
+      "type": "Entity",
+      "name": "TestCase",
+      "description": "A test that verifies requirement implementation",
+      "identityKey": "testCaseId: UUID",
+      "humanRef": "testCaseCode",
+      "attributes": {
+        "testCaseId": "string",
+        "testCaseCode": "string",
+        "title": "string",
+        "description": "string",
+        "testType": "UNIT|INTEGRATION|SYSTEM|ACCEPTANCE|PERFORMANCE|SECURITY",
+        "preconditions": "string|null",
+        "testSteps": "string",
+        "testData": "string|null",
+        "expectedResult": "string",
+        "actualResult": "string|null",
+        "status": "PENDING|PASSED|FAILED|BLOCKED|SKIPPED",
+        "automationStatus": "AUTOMATED|MANUAL|PARTIALLY_AUTOMATED",
+        "executionDate": "dateTime|null"
+      },
+      "invariant": [
+        "testCaseCode must be unique",
+        "Must verify at least one requirement",
+        "expectedResult must be clearly defined",
+        "testSteps must be reproducible"
+      ],
+      "hasState": [
+        "sro:TestPending",
+        "sro:TestPassed",
+        "sro:TestFailed",
+        "sro:TestBlocked",
+        "sro:TestSkipped"
+      ],
+      "initialState": "sro:TestPending",
+      "terminalStates": [
+        "sro:TestPassed",
+        "sro:TestSkipped"
+      ],
+      "relatesTo": [
+        "sro:Requirement"
+      ]
+    },
+    {
+      "id": "sro:RequestedBy",
+      "type": "Operation",
+      "name": "RequestedBy",
+      "description": "Links a requirement to the stakeholder who requested it",
+      "from": "sro:Requirement",
+      "to": "sro:Stakeholder",
+      "precondition": [
+        "Requirement must exist",
+        "Stakeholder must exist"
+      ],
+      "postcondition": [
+        "Requirement is associated with requesting Stakeholder",
+        "Stakeholder is recorded as source of the requirement"
+      ]
+    },
+    {
+      "id": "sro:OwnedBy",
+      "type": "Operation",
+      "name": "OwnedBy",
+      "description": "Links a requirement to the stakeholder responsible for it",
+      "from": "sro:Requirement",
+      "to": "sro:Stakeholder",
+      "precondition": [
+        "Requirement must exist",
+        "Stakeholder must exist",
+        "Stakeholder must have appropriate role"
+      ],
+      "postcondition": [
+        "Requirement has designated owner",
+        "Owner is accountable for requirement lifecycle"
+      ]
+    },
+    {
+      "id": "sro:ApprovedBy",
+      "type": "Operation",
+      "name": "ApprovedBy",
+      "description": "Records stakeholder approval of a requirement",
+      "from": "sro:Requirement",
+      "to": "sro:Stakeholder",
+      "precondition": [
+        "Requirement must be in DRAFT state",
+        "Stakeholder must have approval authority"
+      ],
+      "postcondition": [
+        "Requirement transitions to APPROVED state",
+        "Approval is recorded with timestamp and comments",
+        "RequirementApproved event is emitted"
+      ]
+    },
+    {
+      "id": "sro:Satisfies",
+      "type": "Operation",
+      "name": "Satisfies",
+      "description": "Establishes that a requirement satisfies a goal",
+      "from": "sro:Requirement",
+      "to": "sro:Goal",
+      "precondition": [
+        "Requirement must exist",
+        "Goal must exist"
+      ],
+      "postcondition": [
+        "Requirement contributes to achieving the Goal",
+        "Goal is refined by one or more Requirements"
+      ]
+    },
+    {
+      "id": "sro:Implements",
+      "type": "Operation",
+      "name": "Implements",
+      "description": "Links a requirement to the use case it implements",
+      "from": "sro:Requirement",
+      "to": "sro:UseCase",
+      "precondition": [
+        "Requirement must exist",
+        "UseCase must exist"
+      ],
+      "postcondition": [
+        "Requirement realizes the UseCase scenario",
+        "UseCase is covered by one or more Requirements"
+      ]
+    },
+    {
+      "id": "sro:DependsOn",
+      "type": "Operation",
+      "name": "DependsOn",
+      "description": "Defines dependency between requirements",
+      "from": "sro:Requirement",
+      "to": "sro:Requirement",
+      "precondition": [
+        "Both requirements must exist",
+        "No circular dependencies allowed",
+        "Dependency type must be specified (MANDATORY|OPTIONAL|CONDITIONAL)"
+      ],
+      "postcondition": [
+        "Dependent requirement cannot be implemented before prerequisite",
+        "Dependency relationship is recorded with type and reason"
+      ]
+    },
+    {
+      "id": "sro:ConflictsWith",
+      "type": "Operation",
+      "name": "ConflictsWith",
+      "description": "Identifies conflicting requirements that need resolution",
+      "from": "sro:Requirement",
+      "to": "sro:Requirement",
+      "precondition": [
+        "Both requirements must exist",
+        "Conflict must be documented with type and description"
+      ],
+      "postcondition": [
+        "Conflict is recorded for resolution",
+        "Requirements cannot both be implemented without resolution",
+        "Resolution strategy must be defined"
+      ]
+    },
+    {
+      "id": "sro:Refines",
+      "type": "Operation",
+      "name": "Refines",
+      "description": "Indicates that a requirement refines or elaborates another",
+      "from": "sro:Requirement",
+      "to": "sro:Requirement",
+      "precondition": [
+        "Both requirements must exist",
+        "Target requirement must be higher-level"
+      ],
+      "postcondition": [
+        "Refinement relationship is established",
+        "Child requirement provides more detail than parent"
+      ]
+    },
+    {
+      "id": "sro:DerivedFrom",
+      "type": "Operation",
+      "name": "DerivedFrom",
+      "description": "Indicates that a requirement is derived from another source",
+      "from": "sro:Requirement",
+      "to": ["sro:Requirement", "sro:Goal", "sro:UseCase"],
+      "precondition": [
+        "Requirement must exist",
+        "Source artifact must exist"
+      ],
+      "postcondition": [
+        "Derivation relationship is recorded",
+        "Traceability is maintained"
+      ]
+    },
+    {
+      "id": "sro:VerifiedBy",
+      "type": "Operation",
+      "name": "VerifiedBy",
+      "description": "Associates a requirement with test cases that verify its implementation",
+      "from": "sro:Requirement",
+      "to": "sro:TestCase",
+      "precondition": [
+        "Requirement must be in IMPLEMENTED state",
+        "TestCase must exist"
+      ],
+      "postcondition": [
+        "Requirement is verified by one or more TestCases",
+        "TestCase validates the Requirement implementation",
+        "Verification method and status are recorded"
+      ]
+    },
+    {
+      "id": "sro:Covers",
+      "type": "Operation",
+      "name": "Covers",
+      "description": "Links use case to requirements it covers",
+      "from": "sro:UseCase",
+      "to": "sro:Requirement",
+      "precondition": [
+        "UseCase must exist",
+        "Requirement must exist"
+      ],
+      "postcondition": [
+        "UseCase scenario covers the Requirement",
+        "Requirement is realized through UseCase"
+      ]
+    },
+    {
+      "id": "sro:Includes",
+      "type": "Operation",
+      "name": "Includes",
+      "description": "Links use case to another use case it includes",
+      "from": "sro:UseCase",
+      "to": "sro:UseCase",
+      "precondition": [
+        "Both use cases must exist",
+        "Included use case must be reusable"
+      ],
+      "postcondition": [
+        "Including use case incorporates included use case behavior",
+        "Included use case is executed as part of including use case"
+      ]
+    },
+    {
+      "id": "sro:Extends",
+      "type": "Operation",
+      "name": "Extends",
+      "description": "Links use case to another use case it extends",
+      "from": "sro:UseCase",
+      "to": "sro:UseCase",
+      "precondition": [
+        "Both use cases must exist",
+        "Extension point must be defined in base use case"
+      ],
+      "postcondition": [
+        "Extending use case adds optional behavior to base use case",
+        "Extension is conditional based on extension point"
+      ]
+    },
+    {
+      "id": "sro:RequirementDraft",
+      "type": "State",
+      "name": "RequirementDraft",
+      "description": "Requirement is being drafted and not yet approved"
+    },
+    {
+      "id": "sro:RequirementApproved",
+      "type": "State",
+      "name": "RequirementApproved",
+      "description": "Requirement has been reviewed and approved for implementation"
+    },
+    {
+      "id": "sro:RequirementImplemented",
+      "type": "State",
+      "name": "RequirementImplemented",
+      "description": "Requirement has been implemented in the system"
+    },
+    {
+      "id": "sro:RequirementVerified",
+      "type": "State",
+      "name": "RequirementVerified",
+      "description": "Requirement implementation has been tested and verified"
+    },
+    {
+      "id": "sro:RequirementDeprecated",
+      "type": "State",
+      "name": "RequirementDeprecated",
+      "description": "Requirement is no longer valid and has been deprecated"
+    },
+    {
+      "id": "sro:TestPending",
+      "type": "State",
+      "name": "TestPending",
+      "description": "Test case is pending execution"
+    },
+    {
+      "id": "sro:TestPassed",
+      "type": "State",
+      "name": "TestPassed",
+      "description": "Test case has passed successfully"
+    },
+    {
+      "id": "sro:TestFailed",
+      "type": "State",
+      "name": "TestFailed",
+      "description": "Test case has failed"
+    },
+    {
+      "id": "sro:TestBlocked",
+      "type": "State",
+      "name": "TestBlocked",
+      "description": "Test case is blocked and cannot be executed"
+    },
+    {
+      "id": "sro:TestSkipped",
+      "type": "State",
+      "name": "TestSkipped",
+      "description": "Test case was skipped during execution"
+    }
+  ]
+}
