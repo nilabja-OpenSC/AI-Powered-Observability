@@ -1,148 +1,156 @@
 {
   "@context": {
-    "@vocab": "http://ai-observability.nilabja-haldar.dev/ontology#",
+    "@vocab": "http://example.org/observability/requirements#",
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
     "owl": "http://www.w3.org/2002/07/owl#",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "dcterms": "http://purl.org/dc/terms/",
-    "foaf": "http://xmlns.com/foaf/0.1/",
     "skos": "http://www.w3.org/2004/02/skos/core#"
   },
   "@graph": [
     {
+      "@id": "http://example.org/observability/requirements",
+      "@type": "owl:Ontology",
+      "dcterms:title": "Project Requirements Ontology",
+      "dcterms:description": "Ontology for modeling software requirements, architectural decisions, stakeholders, goals, use cases, and test cases with relationships like dependencies, conflicts, and verification",
+      "dcterms:created": "2026-05-10",
+      "dcterms:creator": "AI-Powered Observability Platform Team",
+      "owl:versionInfo": "1.0.0"
+    },
+    {
       "@id": "Requirement",
       "@type": "owl:Class",
       "rdfs:label": "Requirement",
-      "rdfs:comment": "Base class for all system requirements",
-      "rdfs:subClassOf": "owl:Thing"
+      "rdfs:comment": "Base class for all types of requirements in the system",
+      "skos:definition": "A documented need or expectation that the system must satisfy"
     },
     {
       "@id": "FunctionalRequirement",
       "@type": "owl:Class",
+      "rdfs:subClassOf": "Requirement",
       "rdfs:label": "Functional Requirement",
-      "rdfs:comment": "Requirements that specify system behavior and functionality",
-      "rdfs:subClassOf": "Requirement"
+      "rdfs:comment": "Requirement that specifies a function or behavior the system must perform",
+      "skos:example": "FR-001: AI agents must detect anomalies in real-time"
     },
     {
       "@id": "NonFunctionalRequirement",
       "@type": "owl:Class",
+      "rdfs:subClassOf": "Requirement",
       "rdfs:label": "Non-Functional Requirement",
-      "rdfs:comment": "Requirements that specify system qualities and constraints",
-      "rdfs:subClassOf": "Requirement"
+      "rdfs:comment": "Requirement that specifies quality attributes or constraints",
+      "skos:example": "NFR-001: All operations must be namespace-scoped"
     },
     {
       "@id": "SecurityRequirement",
       "@type": "owl:Class",
+      "rdfs:subClassOf": "NonFunctionalRequirement",
       "rdfs:label": "Security Requirement",
-      "rdfs:comment": "Requirements related to system security and access control",
-      "rdfs:subClassOf": "NonFunctionalRequirement"
+      "rdfs:comment": "Requirement related to system security, access control, or data protection",
+      "skos:example": "SEC-001: Human approval required for all corrective actions"
     },
     {
       "@id": "PerformanceRequirement",
       "@type": "owl:Class",
+      "rdfs:subClassOf": "NonFunctionalRequirement",
       "rdfs:label": "Performance Requirement",
-      "rdfs:comment": "Requirements related to system performance metrics",
-      "rdfs:subClassOf": "NonFunctionalRequirement"
-    },
-    {
-      "@id": "Stakeholder",
-      "@type": "owl:Class",
-      "rdfs:label": "Stakeholder",
-      "rdfs:comment": "Individual or group with interest in the system",
-      "rdfs:subClassOf": "foaf:Agent"
-    },
-    {
-      "@id": "Goal",
-      "@type": "owl:Class",
-      "rdfs:label": "Goal",
-      "rdfs:comment": "High-level objective to be achieved by the system",
-      "rdfs:subClassOf": "owl:Thing"
-    },
-    {
-      "@id": "UseCase",
-      "@type": "owl:Class",
-      "rdfs:label": "Use Case",
-      "rdfs:comment": "Specific scenario of system usage",
-      "rdfs:subClassOf": "owl:Thing"
-    },
-    {
-      "@id": "TestCase",
-      "@type": "owl:Class",
-      "rdfs:label": "Test Case",
-      "rdfs:comment": "Verification procedure for requirements",
-      "rdfs:subClassOf": "owl:Thing"
+      "rdfs:comment": "Requirement specifying performance metrics or constraints",
+      "skos:example": "PERF-001: Anomaly detection within 30 seconds"
     },
     {
       "@id": "ArchitecturalDecision",
       "@type": "owl:Class",
       "rdfs:label": "Architectural Decision",
-      "rdfs:comment": "Key design decision affecting system architecture",
-      "rdfs:subClassOf": "owl:Thing"
+      "rdfs:comment": "A significant design choice that affects the system architecture",
+      "skos:definition": "A decision that shapes the structure, behavior, or quality attributes of the system"
     },
     {
-      "@id": "dependsOn",
-      "@type": "owl:ObjectProperty",
-      "rdfs:label": "depends on",
-      "rdfs:comment": "Indicates dependency between requirements",
-      "rdfs:domain": "Requirement",
-      "rdfs:range": "Requirement"
+      "@id": "Stakeholder",
+      "@type": "owl:Class",
+      "rdfs:label": "Stakeholder",
+      "rdfs:comment": "An individual or group with interest in or influence over the system",
+      "skos:example": "Platform Engineers, DevOps Teams, Security Teams"
     },
     {
-      "@id": "conflictsWith",
-      "@type": "owl:ObjectProperty",
-      "rdfs:label": "conflicts with",
-      "rdfs:comment": "Indicates conflict between requirements",
-      "rdfs:domain": "Requirement",
-      "rdfs:range": "Requirement",
-      "owl:propertyDisjointWith": "dependsOn"
+      "@id": "Goal",
+      "@type": "owl:Class",
+      "rdfs:label": "Goal",
+      "rdfs:comment": "A high-level objective the system aims to achieve",
+      "skos:definition": "A desired outcome or state that drives requirements and design decisions"
     },
     {
-      "@id": "verifiedBy",
-      "@type": "owl:ObjectProperty",
-      "rdfs:label": "verified by",
-      "rdfs:comment": "Links requirement to its verification test case",
-      "rdfs:domain": "Requirement",
-      "rdfs:range": "TestCase"
+      "@id": "UseCase",
+      "@type": "owl:Class",
+      "rdfs:label": "Use Case",
+      "rdfs:comment": "A specific scenario describing how actors interact with the system",
+      "skos:definition": "A sequence of actions that demonstrates system functionality"
     },
     {
-      "@id": "satisfies",
-      "@type": "owl:ObjectProperty",
-      "rdfs:label": "satisfies",
-      "rdfs:comment": "Links requirement to goal it satisfies",
-      "rdfs:domain": "Requirement",
-      "rdfs:range": "Goal"
+      "@id": "TestCase",
+      "@type": "owl:Class",
+      "rdfs:label": "Test Case",
+      "rdfs:comment": "A set of conditions and steps to verify a requirement",
+      "skos:definition": "A specification of test inputs, execution conditions, and expected results"
     },
     {
-      "@id": "implementedBy",
-      "@type": "owl:ObjectProperty",
-      "rdfs:label": "implemented by",
-      "rdfs:comment": "Links requirement to use case that implements it",
-      "rdfs:domain": "Requirement",
-      "rdfs:range": "UseCase"
+      "@id": "RequirementStatus",
+      "@type": "owl:Class",
+      "rdfs:label": "Requirement Status",
+      "rdfs:comment": "The current state of a requirement in its lifecycle"
     },
     {
-      "@id": "proposedBy",
-      "@type": "owl:ObjectProperty",
-      "rdfs:label": "proposed by",
-      "rdfs:comment": "Links requirement to stakeholder who proposed it",
-      "rdfs:domain": "Requirement",
-      "rdfs:range": "Stakeholder"
+      "@id": "Proposed",
+      "@type": ["owl:NamedIndividual", "RequirementStatus"],
+      "rdfs:label": "Proposed",
+      "rdfs:comment": "Requirement has been proposed but not yet approved"
     },
     {
-      "@id": "influences",
-      "@type": "owl:ObjectProperty",
-      "rdfs:label": "influences",
-      "rdfs:comment": "Links architectural decision to affected requirements",
-      "rdfs:domain": "ArchitecturalDecision",
-      "rdfs:range": "Requirement"
+      "@id": "Approved",
+      "@type": ["owl:NamedIndividual", "RequirementStatus"],
+      "rdfs:label": "Approved",
+      "rdfs:comment": "Requirement has been reviewed and approved for implementation"
+    },
+    {
+      "@id": "Implemented",
+      "@type": ["owl:NamedIndividual", "RequirementStatus"],
+      "rdfs:label": "Implemented",
+      "rdfs:comment": "Requirement has been implemented in code"
+    },
+    {
+      "@id": "Verified",
+      "@type": ["owl:NamedIndividual", "RequirementStatus"],
+      "rdfs:label": "Verified",
+      "rdfs:comment": "Requirement has been tested and verified"
+    },
+    {
+      "@id": "Rejected",
+      "@type": ["owl:NamedIndividual", "RequirementStatus"],
+      "rdfs:label": "Rejected",
+      "rdfs:comment": "Requirement has been rejected and will not be implemented"
     },
     {
       "@id": "requirementId",
       "@type": "owl:DatatypeProperty",
       "rdfs:label": "requirement ID",
       "rdfs:domain": "Requirement",
-      "rdfs:range": "xsd:string"
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Unique identifier for the requirement (e.g., FR-001, NFR-001)"
+    },
+    {
+      "@id": "requirementTitle",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "requirement title",
+      "rdfs:domain": "Requirement",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Short descriptive title of the requirement"
+    },
+    {
+      "@id": "requirementDescription",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "requirement description",
+      "rdfs:domain": "Requirement",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Detailed description of what the requirement specifies"
     },
     {
       "@id": "priority",
@@ -150,377 +158,366 @@
       "rdfs:label": "priority",
       "rdfs:domain": "Requirement",
       "rdfs:range": "xsd:string",
-      "rdfs:comment": "Priority level: CRITICAL, HIGH, MEDIUM, LOW"
+      "rdfs:comment": "Priority level: Critical, High, Medium, Low"
     },
     {
       "@id": "status",
-      "@type": "owl:DatatypeProperty",
+      "@type": "owl:ObjectProperty",
       "rdfs:label": "status",
       "rdfs:domain": "Requirement",
-      "rdfs:range": "xsd:string",
-      "rdfs:comment": "Status: PROPOSED, APPROVED, IMPLEMENTED, VERIFIED, REJECTED"
-    },
-    {
-      "@id": "description",
-      "@type": "owl:DatatypeProperty",
-      "rdfs:label": "description",
-      "rdfs:domain": "owl:Thing",
-      "rdfs:range": "xsd:string"
+      "rdfs:range": "RequirementStatus",
+      "rdfs:comment": "Current status of the requirement"
     },
     {
       "@id": "rationale",
       "@type": "owl:DatatypeProperty",
       "rdfs:label": "rationale",
       "rdfs:domain": ["Requirement", "ArchitecturalDecision"],
-      "rdfs:range": "xsd:string"
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Explanation of why this requirement or decision is necessary"
     },
     {
       "@id": "acceptanceCriteria",
       "@type": "owl:DatatypeProperty",
       "rdfs:label": "acceptance criteria",
       "rdfs:domain": "Requirement",
-      "rdfs:range": "xsd:string"
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Conditions that must be met for the requirement to be considered satisfied"
+    },
+    {
+      "@id": "dependsOn",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "depends on",
+      "rdfs:domain": "Requirement",
+      "rdfs:range": "Requirement",
+      "rdfs:comment": "Indicates that one requirement depends on another being satisfied first",
+      "owl:propertyChainAxiom": {
+        "@list": ["dependsOn", "dependsOn"]
+      }
+    },
+    {
+      "@id": "conflictsWith",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "conflicts with",
+      "rdfs:domain": "Requirement",
+      "rdfs:range": "Requirement",
+      "rdfs:comment": "Indicates that two requirements are mutually exclusive or contradictory",
+      "rdf:type": "owl:SymmetricProperty"
+    },
+    {
+      "@id": "verifiedBy",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "verified by",
+      "rdfs:domain": "Requirement",
+      "rdfs:range": "TestCase",
+      "rdfs:comment": "Links a requirement to test cases that verify its implementation"
+    },
+    {
+      "@id": "satisfies",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "satisfies",
+      "rdfs:domain": "Requirement",
+      "rdfs:range": "Goal",
+      "rdfs:comment": "Indicates that a requirement contributes to achieving a goal"
+    },
+    {
+      "@id": "implementedBy",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "implemented by",
+      "rdfs:domain": "Requirement",
+      "rdfs:range": "owl:Thing",
+      "rdfs:comment": "Links a requirement to the component or code that implements it"
+    },
+    {
+      "@id": "proposedBy",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "proposed by",
+      "rdfs:domain": ["Requirement", "ArchitecturalDecision"],
+      "rdfs:range": "Stakeholder",
+      "rdfs:comment": "Identifies who proposed the requirement or decision"
+    },
+    {
+      "@id": "influences",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "influences",
+      "rdfs:domain": "ArchitecturalDecision",
+      "rdfs:range": "Requirement",
+      "rdfs:comment": "Indicates that an architectural decision affects a requirement"
+    },
+    {
+      "@id": "relatedTo",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "related to",
+      "rdfs:domain": "Requirement",
+      "rdfs:range": "Requirement",
+      "rdfs:comment": "General relationship between requirements",
+      "rdf:type": "owl:SymmetricProperty"
+    },
+    {
+      "@id": "stakeholderName",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "stakeholder name",
+      "rdfs:domain": "Stakeholder",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Name of the stakeholder or stakeholder group"
+    },
+    {
+      "@id": "stakeholderRole",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "stakeholder role",
+      "rdfs:domain": "Stakeholder",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Role or responsibility of the stakeholder"
+    },
+    {
+      "@id": "stakeholderInterest",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "stakeholder interest",
+      "rdfs:domain": "Stakeholder",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "What the stakeholder cares about in the system"
+    },
+    {
+      "@id": "goalDescription",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "goal description",
+      "rdfs:domain": "Goal",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Description of the goal"
+    },
+    {
+      "@id": "goalMetric",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "goal metric",
+      "rdfs:domain": "Goal",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Measurable metric to determine if goal is achieved"
+    },
+    {
+      "@id": "useCaseTitle",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "use case title",
+      "rdfs:domain": "UseCase",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Title of the use case"
+    },
+    {
+      "@id": "useCaseDescription",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "use case description",
+      "rdfs:domain": "UseCase",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Detailed description of the use case scenario"
+    },
+    {
+      "@id": "actor",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": "actor",
+      "rdfs:domain": "UseCase",
+      "rdfs:range": "Stakeholder",
+      "rdfs:comment": "The stakeholder who performs the use case"
+    },
+    {
+      "@id": "precondition",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "precondition",
+      "rdfs:domain": ["UseCase", "TestCase"],
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Conditions that must be true before execution"
+    },
+    {
+      "@id": "postcondition",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "postcondition",
+      "rdfs:domain": ["UseCase", "TestCase"],
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Conditions that will be true after successful execution"
+    },
+    {
+      "@id": "testCaseId",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "test case ID",
+      "rdfs:domain": "TestCase",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Unique identifier for the test case"
+    },
+    {
+      "@id": "testCaseDescription",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "test case description",
+      "rdfs:domain": "TestCase",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Description of what the test case verifies"
+    },
+    {
+      "@id": "testSteps",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "test steps",
+      "rdfs:domain": "TestCase",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Step-by-step instructions to execute the test"
+    },
+    {
+      "@id": "expectedResult",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "expected result",
+      "rdfs:domain": "TestCase",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Expected outcome of the test"
+    },
+    {
+      "@id": "decisionId",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "decision ID",
+      "rdfs:domain": "ArchitecturalDecision",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Unique identifier for the architectural decision"
+    },
+    {
+      "@id": "decisionTitle",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "decision title",
+      "rdfs:domain": "ArchitecturalDecision",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Title of the architectural decision"
+    },
+    {
+      "@id": "decisionDescription",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "decision description",
+      "rdfs:domain": "ArchitecturalDecision",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Detailed description of the decision and its implications"
+    },
+    {
+      "@id": "alternatives",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "alternatives",
+      "rdfs:domain": "ArchitecturalDecision",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Alternative approaches that were considered"
+    },
+    {
+      "@id": "consequences",
+      "@type": "owl:DatatypeProperty",
+      "rdfs:label": "consequences",
+      "rdfs:domain": "ArchitecturalDecision",
+      "rdfs:range": "xsd:string",
+      "rdfs:comment": "Impact and implications of the decision"
     },
     {
       "@id": "FR-001",
       "@type": "FunctionalRequirement",
       "requirementId": "FR-001",
-      "rdfs:label": "AI Agent Observability Query",
-      "description": "System must provide AI agents to query Prometheus, Grafana, and Loki for observability data",
-      "priority": "CRITICAL",
-      "status": "IMPLEMENTED",
-      "rationale": "Core functionality for observability platform",
-      "acceptanceCriteria": "Agents can execute PromQL/LogQL queries and return formatted results",
-      "satisfies": "GOAL-001",
-      "implementedBy": "UC-001",
-      "verifiedBy": "TC-001",
-      "proposedBy": "STAKEHOLDER-001"
+      "requirementTitle": "Real-time Anomaly Detection",
+      "requirementDescription": "AI agents must detect anomalies in metrics and logs in real-time",
+      "priority": "Critical",
+      "status": "Implemented",
+      "acceptanceCriteria": "Detection within 30 seconds of anomaly occurrence"
     },
     {
       "@id": "FR-002",
       "@type": "FunctionalRequirement",
       "requirementId": "FR-002",
-      "rdfs:label": "Human-in-the-Loop Approval",
-      "description": "All corrective actions must require human approval via Slack before execution",
-      "priority": "CRITICAL",
-      "status": "IMPLEMENTED",
-      "rationale": "Safety mechanism to prevent automated actions without oversight",
-      "acceptanceCriteria": "Slack notifications sent with approve/deny buttons, 5-minute timeout defaults to DENY",
-      "satisfies": "GOAL-002",
-      "implementedBy": "UC-002",
-      "verifiedBy": "TC-002",
-      "dependsOn": "FR-003",
-      "proposedBy": "STAKEHOLDER-002"
-    },
-    {
-      "@id": "FR-003",
-      "@type": "FunctionalRequirement",
-      "requirementId": "FR-003",
-      "rdfs:label": "Slack Integration",
-      "description": "System must integrate with Slack for notifications and interactive approvals",
-      "priority": "CRITICAL",
-      "status": "IMPLEMENTED",
-      "rationale": "Primary communication channel for human-in-the-loop workflows",
-      "acceptanceCriteria": "Slack Block Kit messages with interactive buttons, webhook callbacks handled",
-      "satisfies": "GOAL-002",
-      "implementedBy": "UC-002",
-      "verifiedBy": "TC-003",
-      "proposedBy": "STAKEHOLDER-002"
-    },
-    {
-      "@id": "FR-004",
-      "@type": "FunctionalRequirement",
-      "requirementId": "FR-004",
-      "rdfs:label": "Incident Documentation",
-      "description": "System must automatically create Confluence pages for approved incidents",
-      "priority": "HIGH",
-      "status": "IMPLEMENTED",
-      "rationale": "Maintain audit trail and knowledge base of incidents",
-      "acceptanceCriteria": "Confluence page created with incident details, resolution steps, and outcome",
-      "satisfies": "GOAL-003",
-      "implementedBy": "UC-003",
-      "verifiedBy": "TC-004",
-      "dependsOn": "FR-002",
-      "proposedBy": "STAKEHOLDER-003"
-    },
-    {
-      "@id": "FR-005",
-      "@type": "FunctionalRequirement",
-      "requirementId": "FR-005",
-      "rdfs:label": "Pod Recovery Agent",
-      "description": "Agent must detect and recover pods in CrashLoopBackOff state",
-      "priority": "HIGH",
-      "status": "IMPLEMENTED",
-      "rationale": "Automated recovery of common pod failures",
-      "acceptanceCriteria": "Agent detects CrashLoopBackOff, requests approval, restarts pod on approval",
-      "satisfies": "GOAL-004",
-      "implementedBy": "UC-004",
-      "verifiedBy": "TC-005",
-      "dependsOn": ["FR-002", "NFR-001"],
-      "proposedBy": "STAKEHOLDER-001"
+      "requirementTitle": "Human-in-the-Loop Approval",
+      "requirementDescription": "All corrective actions require human approval via Slack",
+      "priority": "Critical",
+      "status": "Implemented",
+      "acceptanceCriteria": "Approval request sent to Slack with approve/deny buttons"
     },
     {
       "@id": "NFR-001",
       "@type": "NonFunctionalRequirement",
       "requirementId": "NFR-001",
-      "rdfs:label": "Namespace Isolation",
-      "description": "All operations must be scoped to namespace: nilabja-haldar-dev",
-      "priority": "CRITICAL",
-      "status": "IMPLEMENTED",
-      "rationale": "Security constraint to prevent cluster-wide changes",
-      "acceptanceCriteria": "All Kubernetes operations include namespace filter, attempts to access other namespaces fail",
-      "satisfies": "GOAL-005",
-      "verifiedBy": "TC-006",
-      "proposedBy": "STAKEHOLDER-002"
+      "requirementTitle": "Namespace Isolation",
+      "requirementDescription": "All operations must be scoped to nilabja-haldar-dev namespace",
+      "priority": "Critical",
+      "status": "Implemented",
+      "acceptanceCriteria": "No cluster-wide RBAC or operations outside namespace"
     },
     {
       "@id": "SEC-001",
       "@type": "SecurityRequirement",
       "requirementId": "SEC-001",
-      "rdfs:label": "Minimal RBAC Permissions",
-      "description": "ServiceAccounts must have minimal Role permissions, no cluster-wide RBAC",
-      "priority": "CRITICAL",
-      "status": "IMPLEMENTED",
-      "rationale": "Principle of least privilege for security",
-      "acceptanceCriteria": "Roles grant only required permissions within namespace, no ClusterRoles used",
-      "satisfies": "GOAL-005",
-      "verifiedBy": "TC-007",
-      "dependsOn": "NFR-001",
-      "proposedBy": "STAKEHOLDER-002"
-    },
-    {
-      "@id": "SEC-002",
-      "@type": "SecurityRequirement",
-      "requirementId": "SEC-002",
-      "rdfs:label": "Fail-Safe Approval Timeout",
-      "description": "Approval requests must timeout after 5 minutes and default to DENY",
-      "priority": "CRITICAL",
-      "status": "IMPLEMENTED",
-      "rationale": "Prevent hanging approvals from executing unintended actions",
-      "acceptanceCriteria": "Timeout mechanism enforced, denied actions send manual steps to Slack",
-      "satisfies": "GOAL-002",
-      "verifiedBy": "TC-008",
-      "dependsOn": "FR-002",
-      "proposedBy": "STAKEHOLDER-002"
+      "requirementTitle": "Approval Timeout Fail-Safe",
+      "requirementDescription": "Approval timeout (5 min) must default to DENY",
+      "priority": "Critical",
+      "status": "Implemented",
+      "acceptanceCriteria": "No action executed without explicit approval"
     },
     {
       "@id": "PERF-001",
       "@type": "PerformanceRequirement",
       "requirementId": "PERF-001",
-      "rdfs:label": "Query Response Time",
-      "description": "Prometheus/Loki queries must return results within 5 seconds for recent data",
-      "priority": "HIGH",
-      "status": "APPROVED",
-      "rationale": "Ensure responsive user experience in Chat UI",
-      "acceptanceCriteria": "95th percentile query latency < 5 seconds for last 6 hours of data",
-      "satisfies": "GOAL-006",
-      "verifiedBy": "TC-009",
-      "proposedBy": "STAKEHOLDER-001"
-    },
-    {
-      "@id": "PERF-002",
-      "@type": "PerformanceRequirement",
-      "requirementId": "PERF-002",
-      "rdfs:label": "Agent Response Time",
-      "description": "AI agents must respond to queries within 10 seconds",
-      "priority": "MEDIUM",
-      "status": "APPROVED",
-      "rationale": "Maintain conversational experience in Chat UI",
-      "acceptanceCriteria": "Agent processing time < 10 seconds for 90% of queries",
-      "satisfies": "GOAL-006",
-      "verifiedBy": "TC-010",
-      "proposedBy": "STAKEHOLDER-001"
-    },
-    {
-      "@id": "GOAL-001",
-      "@type": "Goal",
-      "rdfs:label": "Automated Observability",
-      "description": "Enable users to query observability data through natural language AI agents"
-    },
-    {
-      "@id": "GOAL-002",
-      "@type": "Goal",
-      "rdfs:label": "Safe Automation",
-      "description": "Provide automated corrective actions with human oversight and fail-safe mechanisms"
-    },
-    {
-      "@id": "GOAL-003",
-      "@type": "Goal",
-      "rdfs:label": "Knowledge Management",
-      "description": "Maintain comprehensive documentation of incidents and resolutions"
-    },
-    {
-      "@id": "GOAL-004",
-      "@type": "Goal",
-      "rdfs:label": "Self-Healing Infrastructure",
-      "description": "Automatically detect and recover from common infrastructure failures"
-    },
-    {
-      "@id": "GOAL-005",
-      "@type": "Goal",
-      "rdfs:label": "Security Compliance",
-      "description": "Ensure all operations comply with namespace isolation and minimal permissions"
-    },
-    {
-      "@id": "GOAL-006",
-      "@type": "Goal",
-      "rdfs:label": "Performance Excellence",
-      "description": "Deliver responsive user experience with low-latency queries and agent responses"
-    },
-    {
-      "@id": "UC-001",
-      "@type": "UseCase",
-      "rdfs:label": "Query Prometheus Metrics",
-      "description": "User asks 'What is the CPU usage of backend pods?' via Chat UI, agent queries Prometheus and returns formatted results"
-    },
-    {
-      "@id": "UC-002",
-      "@type": "UseCase",
-      "rdfs:label": "Approve Pod Restart",
-      "description": "Agent detects CrashLoopBackOff, sends Slack notification with approve/deny buttons, user approves, pod is restarted"
-    },
-    {
-      "@id": "UC-003",
-      "@type": "UseCase",
-      "rdfs:label": "Document Incident",
-      "description": "After approved pod restart, agent creates Confluence page with incident details and resolution"
-    },
-    {
-      "@id": "UC-004",
-      "@type": "UseCase",
-      "rdfs:label": "Automated Pod Recovery",
-      "description": "Pod enters CrashLoopBackOff, agent detects via Prometheus alert, requests approval, restarts pod on approval"
-    },
-    {
-      "@id": "TC-001",
-      "@type": "TestCase",
-      "rdfs:label": "Test Prometheus Query Execution",
-      "description": "Verify agent can execute PromQL query and return formatted results",
-      "acceptanceCriteria": "Query returns valid metrics with correct namespace filter"
-    },
-    {
-      "@id": "TC-002",
-      "@type": "TestCase",
-      "rdfs:label": "Test Approval Workflow",
-      "description": "Verify Slack approval workflow with approve/deny paths",
-      "acceptanceCriteria": "Approval executes action, denial sends manual steps, timeout defaults to deny"
-    },
-    {
-      "@id": "TC-003",
-      "@type": "TestCase",
-      "rdfs:label": "Test Slack Integration",
-      "description": "Verify Slack Block Kit messages and interactive buttons",
-      "acceptanceCriteria": "Messages formatted correctly, buttons trigger callbacks"
-    },
-    {
-      "@id": "TC-004",
-      "@type": "TestCase",
-      "rdfs:label": "Test Confluence Documentation",
-      "description": "Verify Confluence page creation with incident details",
-      "acceptanceCriteria": "Page created with correct format and content"
-    },
-    {
-      "@id": "TC-005",
-      "@type": "TestCase",
-      "rdfs:label": "Test Pod Recovery",
-      "description": "Verify pod restart after approval",
-      "acceptanceCriteria": "Pod restarted successfully, status changes from CrashLoopBackOff to Running"
-    },
-    {
-      "@id": "TC-006",
-      "@type": "TestCase",
-      "rdfs:label": "Test Namespace Isolation",
-      "description": "Verify operations are scoped to nilabja-haldar-dev namespace",
-      "acceptanceCriteria": "Attempts to access other namespaces fail with error"
-    },
-    {
-      "@id": "TC-007",
-      "@type": "TestCase",
-      "rdfs:label": "Test RBAC Permissions",
-      "description": "Verify ServiceAccounts have minimal required permissions",
-      "acceptanceCriteria": "Roles grant only necessary permissions, no cluster-wide access"
-    },
-    {
-      "@id": "TC-008",
-      "@type": "TestCase",
-      "rdfs:label": "Test Approval Timeout",
-      "description": "Verify approval timeout defaults to DENY after 5 minutes",
-      "acceptanceCriteria": "Timeout triggers deny action, manual steps sent to Slack"
-    },
-    {
-      "@id": "TC-009",
-      "@type": "TestCase",
-      "rdfs:label": "Test Query Performance",
-      "description": "Verify Prometheus/Loki query response time",
-      "acceptanceCriteria": "95th percentile latency < 5 seconds for recent data"
-    },
-    {
-      "@id": "TC-010",
-      "@type": "TestCase",
-      "rdfs:label": "Test Agent Response Time",
-      "description": "Verify AI agent processing time",
-      "acceptanceCriteria": "90% of queries processed within 10 seconds"
-    },
-    {
-      "@id": "STAKEHOLDER-001",
-      "@type": "Stakeholder",
-      "foaf:name": "Platform Engineers",
-      "rdfs:label": "Platform Engineers",
-      "description": "Primary users who query observability data and manage infrastructure"
-    },
-    {
-      "@id": "STAKEHOLDER-002",
-      "@type": "Stakeholder",
-      "foaf:name": "Security Team",
-      "rdfs:label": "Security Team",
-      "description": "Ensures compliance with security policies and namespace isolation"
-    },
-    {
-      "@id": "STAKEHOLDER-003",
-      "@type": "Stakeholder",
-      "foaf:name": "Operations Team",
-      "rdfs:label": "Operations Team",
-      "description": "Manages incident response and documentation"
+      "requirementTitle": "Query Response Time",
+      "requirementDescription": "Prometheus queries must return within 5 seconds",
+      "priority": "High",
+      "status": "Implemented",
+      "acceptanceCriteria": "95th percentile query latency < 5s"
     },
     {
       "@id": "AD-001",
       "@type": "ArchitecturalDecision",
-      "rdfs:label": "Use OpenAI + LangChain for AI Agents",
-      "description": "Primary tech stack: OpenAI for LLM, LangChain for agent framework, Chroma for vector store",
-      "rationale": "Mature ecosystem with extensive tooling and community support",
-      "influences": ["FR-001", "FR-005", "PERF-002"]
+      "decisionId": "AD-001",
+      "decisionTitle": "Use LangChain for AI Agent Framework",
+      "decisionDescription": "Selected LangChain as the framework for building AI agents",
+      "rationale": "Provides tool integration, memory management, and agent orchestration",
+      "alternatives": "Custom framework, AutoGPT, Semantic Kernel",
+      "consequences": "Dependency on LangChain ecosystem, but faster development"
     },
     {
       "@id": "AD-002",
       "@type": "ArchitecturalDecision",
-      "rdfs:label": "Namespace-Scoped Operations Only",
-      "description": "All Kubernetes operations restricted to nilabja-haldar-dev namespace",
-      "rationale": "Security constraint to prevent cluster-wide changes in shared environment",
-      "influences": ["NFR-001", "SEC-001", "FR-005"]
+      "decisionId": "AD-002",
+      "decisionTitle": "Namespace-Scoped RBAC Only",
+      "decisionDescription": "Use only namespace-scoped Roles, no ClusterRoles",
+      "rationale": "Security requirement to prevent cluster-wide access",
+      "alternatives": "ClusterRoles with namespace filtering",
+      "consequences": "Cannot perform cluster-wide operations, but more secure"
     },
     {
-      "@id": "AD-003",
-      "@type": "ArchitecturalDecision",
-      "rdfs:label": "Slack as Primary Communication Channel",
-      "description": "Use Slack for issue notifications, approvals, and incident updates",
-      "rationale": "Existing team communication platform with rich interactive capabilities",
-      "influences": ["FR-002", "FR-003", "SEC-002"]
+      "@id": "StakeholderPlatformEngineers",
+      "@type": "Stakeholder",
+      "stakeholderName": "Platform Engineers",
+      "stakeholderRole": "System Operators",
+      "stakeholderInterest": "Automated incident resolution, reduced manual toil"
     },
     {
-      "@id": "AD-004",
-      "@type": "ArchitecturalDecision",
-      "rdfs:label": "Separate Chat UI and Slack Workflows",
-      "description": "Chat UI for queries only, Slack for approvals and notifications",
-      "rationale": "Clear separation of concerns: read-only queries vs mutation workflows",
-      "influences": ["FR-001", "FR-002"]
+      "@id": "StakeholderDevOpsTeams",
+      "@type": "Stakeholder",
+      "stakeholderName": "DevOps Teams",
+      "stakeholderRole": "Application Developers",
+      "stakeholderInterest": "Observability insights, deployment automation"
     },
     {
-      "@id": "AD-005",
-      "@type": "ArchitecturalDecision",
-      "rdfs:label": "Fail-Safe Approval Mechanism",
-      "description": "Default to DENY on timeout or error in approval workflow",
-      "rationale": "Safety-first approach to prevent unintended automated actions",
-      "influences": ["FR-002", "SEC-002"]
+      "@id": "Goal-001",
+      "@type": "Goal",
+      "goalDescription": "Reduce Mean Time to Resolution (MTTR) for incidents",
+      "goalMetric": "MTTR < 10 minutes for common issues"
+    },
+    {
+      "@id": "Goal-002",
+      "@type": "Goal",
+      "goalDescription": "Achieve 99.9% uptime for critical services",
+      "goalMetric": "Monthly uptime percentage"
+    },
+    {
+      "@id": "UC-001",
+      "@type": "UseCase",
+      "useCaseTitle": "Automated Pod Recovery",
+      "useCaseDescription": "Agent detects CrashLoopBackOff and requests approval to restart pod",
+      "actor": "StakeholderPlatformEngineers",
+      "precondition": "Pod in CrashLoopBackOff state",
+      "postcondition": "Pod restarted and running normally"
+    },
+    {
+      "@id": "TC-001",
+      "@type": "TestCase",
+      "testCaseId": "TC-001",
+      "testCaseDescription": "Verify anomaly detection within 30 seconds",
+      "testSteps": "1. Inject anomaly 2. Wait for detection 3. Verify alert sent",
+      "expectedResult": "Alert received within 30 seconds",
+      "verifiedBy": "FR-001"
     }
   ]
 }
