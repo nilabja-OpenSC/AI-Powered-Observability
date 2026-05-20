@@ -37,7 +37,7 @@ export default function Header() {
           </div>
           <div className="flex items-center space-x-4">
             <a
-              href="http://chat-ui:3001"
+              href={process.env.NEXT_PUBLIC_CHAT_UI_URL || "http://localhost:3001"}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-primary px-4 py-2"
