@@ -8,25 +8,108 @@ import { api } from '@/lib/api';
 import { debounce, getErrorMessage } from '@/lib/utils';
 import ProductCard from './ProductCard';
 
+// Sample catalog data for fallback when backend is unavailable
+const SAMPLE_PRODUCTS: Product[] = [
+  {
+    id: 1,
+    name: "Wireless Bluetooth Headphones",
+    description: "Premium noise-cancelling headphones with 30-hour battery life",
+    price: 129.99,
+    stock: 50,
+    category: "Electronics",
+    image_url: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 2,
+    name: "Smart Watch Series 5",
+    description: "Fitness tracking, heart rate monitor, GPS enabled",
+    price: 299.99,
+    stock: 30,
+    category: "Electronics",
+    image_url: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 3,
+    name: "Laptop Backpack",
+    description: "Water-resistant backpack with USB charging port",
+    price: 49.99,
+    stock: 100,
+    category: "Accessories",
+    image_url: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 4,
+    name: "Mechanical Keyboard",
+    description: "RGB backlit gaming keyboard with blue switches",
+    price: 89.99,
+    stock: 45,
+    category: "Electronics",
+    image_url: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 5,
+    name: "Wireless Mouse",
+    description: "Ergonomic design with adjustable DPI settings",
+    price: 34.99,
+    stock: 75,
+    category: "Electronics",
+    image_url: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 6,
+    name: "USB-C Hub",
+    description: "7-in-1 adapter with HDMI, USB 3.0, and SD card reader",
+    price: 39.99,
+    stock: 60,
+    category: "Accessories",
+    image_url: "https://images.unsplash.com/photo-1625948515291-69613efd103f?w=400",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
 export default function ProductList() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [usingSampleData, setUsingSampleData] = useState(false);
 
   // Fetch products
   const fetchProducts = async (query?: string) => {
     try {
       setLoading(true);
       setError(null);
+      setUsingSampleData(false);
       
-      const data = query 
+      const data = query
         ? await api.searchProducts(query)
         : await api.getProducts();
       
-      setProducts(Array.isArray(data) ? data : data.items || []);
+      setProducts(Array.isArray(data) ? data : []);
     } catch (err) {
+      console.error('Failed to fetch products, using sample data:', err);
       setError(getErrorMessage(err));
+      // Use sample data as fallback
+      setUsingSampleData(true);
+      const filteredSamples = query
+        ? SAMPLE_PRODUCTS.filter(p =>
+            p.name.toLowerCase().includes(query.toLowerCase()) ||
+            p.description.toLowerCase().includes(query.toLowerCase()) ||
+            p.category.toLowerCase().includes(query.toLowerCase())
+          )
+        : SAMPLE_PRODUCTS;
+      setProducts(filteredSamples);
     } finally {
       setLoading(false);
     }
@@ -60,36 +143,42 @@ export default function ProductList() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-        <svg
-          className="w-12 h-12 text-red-400 mx-auto mb-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        <h3 className="text-lg font-semibold text-red-900 mb-2">Error Loading Products</h3>
-        <p className="text-red-700 mb-4">{error}</p>
-        <button
-          onClick={() => fetchProducts()}
-          className="btn btn-primary"
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
+      {/* Sample Data Banner */}
+      {usingSampleData && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <svg
+              className="w-6 h-6 text-yellow-600 mr-3 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-yellow-900 mb-1">
+                Using Sample Catalog
+              </h3>
+              <p className="text-sm text-yellow-700 mb-2">
+                Backend service is unavailable. Displaying sample products for demonstration.
+              </p>
+              <button
+                onClick={() => fetchProducts()}
+                className="text-sm text-yellow-800 hover:text-yellow-900 font-medium underline"
+              >
+                Try connecting again
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Search Bar */}
       <div className="bg-white rounded-lg shadow-sm p-4">
         <div className="relative">

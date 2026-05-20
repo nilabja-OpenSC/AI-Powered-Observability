@@ -122,9 +122,31 @@
 
 .message-text {
   font-size: 0.9375rem;
-  line-height: 1.5;
+  line-height: 1.6;
   white-space: pre-wrap;
   word-wrap: break-word;
+}
+
+/* Markdown-style formatting in messages */
+.message-text strong {
+  font-weight: 600;
+  color: inherit;
+}
+
+.message.agent .message-text strong {
+  color: #1f2937;
+}
+
+.message-text code {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+}
+
+.message.user .message-text code {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .message-time {
@@ -165,6 +187,12 @@
   font-family: inherit;
   resize: none;
   transition: border-color 0.2s;
+  color: #1f2937;
+  background: white;
+}
+
+.input-container textarea::placeholder {
+  color: #9ca3af;
 }
 
 .input-container textarea:focus {
@@ -175,6 +203,7 @@
 .input-container textarea:disabled {
   background: #f9fafb;
   cursor: not-allowed;
+  color: #6b7280;
 }
 
 .input-container button {
@@ -231,6 +260,49 @@
 .examples button:hover {
   background: rgba(255, 255, 255, 0.3);
   transform: translateY(-1px);
+}
+
+/* Follow-up suggestions */
+.follow-ups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+  backdrop-filter: blur(10px);
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+.follow-ups p {
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.follow-up-btn {
+  background: rgba(16, 185, 129, 0.2);
+  color: white;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.follow-up-btn:hover {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: rgba(16, 185, 129, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 /* Scrollbar styling */
